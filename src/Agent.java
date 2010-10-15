@@ -45,18 +45,12 @@ public class Agent {
 	
 	Agent() {		
 		light = new LightSensor(SensorPort.S3, true);
-		sound = new SoundSensor(SensorPort.S4, true);	// not sure with the port
+		sound = new SoundSensor(SensorPort.S1);	// not sure which port
 		
 		wumpusWorld = new WumpusWorld(light);
 	}
 	
 	void knowledgeBase() {
-		/*
-		 * A square [i,j] is adjacent to [x,y] if, (fA x,y,i,j) |x-i| or |y-j|
-		 * Formally: (fA i,j,x,y) Adjacent([i,j], [x,y]) <=> (|x-i| or |y-j|) 
-		 */
-		//boolean Adjacent(Position p1, Position p2) { return (Math.max(Math.abs(p1.x-p2.x), Math.abs(p1.y-p2.y)) == 1) ? true : false }
-		
 		/*
 		 * A square [x,y] is breezy if adjacent to a pit ( and [x,y] might
 		 * be a pit of some adjacent squares are breezy. )
@@ -77,6 +71,22 @@ public class Agent {
 		 */
 		// boolean Ok(Position p) { return not(Pit(p)) || not(Wumpus(p)) }
 	}
+	
+	/**
+	 * Checks if two squares are adjacent or not
+	 * 
+	 * @param p1 Position p1
+	 * @param p2 Position p2
+	 * @return true iff adjacent
+	 */
+	private boolean adjacent(Position p1, Position p2) { 
+		/*
+		 * A square [i,j] is adjacent to [x,y] if, (fA x,y,i,j) |x-i| or |y-j|
+		 * Formally: (fA i,j,x,y) Adjacent([i,j], [x,y]) <=> (|x-i| or |y-j|) 
+		 */
+		return (Math.max(Math.abs(p1.x-p2.x), Math.abs(p1.y-p2.y)) == 1) ? true : false; 
+	}
+	
 	
 	void welcomeMsg() throws InterruptedException {
 		System.out.println("What took you so long?!\n"+

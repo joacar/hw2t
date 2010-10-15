@@ -96,7 +96,15 @@ public class WumpusWorld {
 		
 		adjacentList = new ArrayList<HashSet<State>>();
 	}
-
+	
+	/**
+	 * Did not want to put any more code duplication 
+	 * in constructor than already there
+	 * 
+	 * @param ls LightSensor ls
+	 * @param text String text to show
+	 * @return int value representing light
+	 */
 	private int lightValue(LightSensor ls, String text) {	
 		System.out.println("Place sensor above shade for "+text);
 		Button.waitForPress();
