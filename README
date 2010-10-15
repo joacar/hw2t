@@ -1,0 +1,13 @@
+Authors: A0075840A and A0075885L
+
+This is a Wumpus World AI project for the course CS3243: Introdcution to Artificial Intelligence in NUS, autumn 2010.
+
+The Wumpus World is a well known problem and a good problem to start working with logical agents on. The problem description is as follows:
+Our robot (agent) starts at a randomly chosen square inside the game world. The starting position may be anywhere on the board, but certain conditions holds for ut:
+    * The start location wont be at a smelly square
+    * The start location wont be at a breezy square
+This is just to ensure that the agent is thinking rationally and not ends up dead because of pure randomness. Consider how you would feel wake up blind folded on a raft with only one safe way to go.
+
+The mission is the collect the gold and return to the starting location with the gold. But during the riscy mission we have to look out for the Wumpus trying to kill us. Luckily he smells terrible so we can feel the smell surrounding his position. We also dont want to fall into the pits. But, also very luckily, they give away a light breeze so that we can tell when getting close to a pit and should be extra careful about our next move.
+
+The agent percieves it surrounding, one move at a time and after each percept logically infers about our next move and consequently updates its knowledge about the world. It uses a database with a set of rules, like the ones explained above, all adjacent squares to a pit are breezy etc.
