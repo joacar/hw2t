@@ -1,6 +1,7 @@
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 import lejos.nxt.Button;
@@ -12,25 +13,31 @@ import lejos.nxt.LightSensor;
  *
  */
 public class WumpusWorld {
-	final State GRID[][] = new State[7][7];
-
-	
 	private HashMap<Agent.Position, State> exploredStates;
 	private ArrayList<HashSet<State>> adjacentList;
-	
-	final int BREEZE, STENCH, GLITTER, STENCH_BREEZE, OK, 
+
+	private final int BREEZE, STENCH, GLITTER, STENCH_BREEZE, OK, 
 	GLITTER_STENCH, GLITTER_BREEZE, STENCH_GLITTER_BREEZE;
 
-	private final static class State {
+	public class State {
 		boolean ok, stench, glitter, breeze;
-		boolean visited = false;
-		int wumpus = 0, pit = 0;
 		final boolean states[] = {ok, stench, glitter, breeze};
+		int wumpus = 0, pit = 0, time;
+
+		/**
+		 * Constructor
+		 * 
+		 * @param time the square was found
+		 * 		(discrete counter)
+		 */
+		State(int time) {
+			this.time = time;
+		}
 
 		@Override
 		public String toString() {
 			StringBuilder sb = new StringBuilder();
-			sb.append("Current state is ");
+			sb.append("Current state "+time+"is ");
 			for(int i = 8; i >= 1; i++) {
 				switch(i) {
 				case 1:
@@ -68,14 +75,14 @@ public class WumpusWorld {
 		Button.waitForPress();
 		tempLightValue = ls.getLightValue();
 		OK = tempLightValue;
-		
+
 		System.out.println("Place sensor above pure white...");
 		Button.waitForPress();
 		ls.calibrateHigh();
 
 		tempLightValue = lightValue(ls, "GLITTER");
 		GLITTER = tempLightValue;
-		
+
 		tempLightValue = lightValue(ls, "BREEZE");
 		BREEZE = tempLightValue;
 
@@ -93,10 +100,10 @@ public class WumpusWorld {
 
 		tempLightValue = lightValue(ls, "STENCH + GLITTER + BREEZE");
 		STENCH_GLITTER_BREEZE = tempLightValue;
-		
+
 		adjacentList = new ArrayList<HashSet<State>>();
 	}
-	
+
 	/**
 	 * Did not want to put any more code duplication 
 	 * in constructor than already there
@@ -109,6 +116,58 @@ public class WumpusWorld {
 		System.out.println("Place sensor above shade for "+text);
 		Button.waitForPress();
 		return ls.getLightValue();
+	}
+
+	/**
+	 * Creates the newly discovered square and returns it
+	 * 
+	 * @param lightValue ligth value of square
+	 * @return the square in form of a State
+	 */
+	public State newState(int lightValue, int time) {
+		HashSet<State> adjacentVertices = new HashSet<State>();
+
+		State state = new State(time);
+
+		// Set variables that corresponds to the light value 
+		if(BREEZE == lightValue) {
+			state.breeze = true;
+		} else if(STENCH == lightValue) {
+			state.stench = true;
+		} else if(GLITTER == lightValue) {
+			state.glitter = true;
+		} else if(STENCH_BREEZE == lightValue) {
+			state.stench = state.breeze = true;
+		} else if(GLITTER_BREEZE == lightValue) {
+			state.glitter = state.breeze = true;
+		} else if(GLITTER_STENCH == lightValue) {
+			state.glitter = state.stench = true; 
+		} else if(STENCH_GLITTER_BREEZE == lightValue) {
+			state.stench = state.glitter = state.breeze = true;
+		} else if(OK == lightValue) {		
+			state.ok = true;
+		} else {
+			// else what ?
+		}
+		
+		adjacentVertices.add(state);
+		
+		adjacentList.add(time, adjacentVertices);
+
+		return state;
+	}
+	
+	/**
+	 * Returns an iterator 
+	 * 
+	 * @param state
+	 * @return
+	 */
+	public Iterator<State> getAdjacentStates(State state) {
+		int time = state.time;
+		HashSet<State> adjacentVertices = adjacentList.get(time);
+		
+		return adjacentVertices.iterator();
 	}
 
 

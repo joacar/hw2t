@@ -25,12 +25,11 @@ public class Agent {
 	private LightSensor light;
 	private SoundSensor sound;
 	
+	private int time = 0;
+	
 	/**
 	 * Just a simple holder for
 	 * x and y coordinates
-	 * 
-	 * @author a0075840a and a0075885l
-	 *
 	 */
 	public static class Position {
 		int x, y;
@@ -39,6 +38,7 @@ public class Agent {
 			this.x = x; this.y = y; 
 		}
 	}
+	
 	public static void main(String args[]) {
 		new Agent();
 	}
@@ -50,14 +50,21 @@ public class Agent {
 		wumpusWorld = new WumpusWorld(light);
 	}
 	
-	void knowledgeBase() {
-		/*
-		 * A square [x,y] is breezy if adjacent to a pit ( and [x,y] might
-		 * be a pit of some adjacent squares are breezy. )
-		 * Formally: (fA s) Breezy(s) (<=)=> (tE r) Adjacent(r,s) & Pit(r)
-		 */
-		// boolean Breezy(Position p) { State[] adj = getAdj(p); for(State s : adj) if(s.BREEZE & s.PIT ?) return true; return false; }
+	void percept() {
+		// Read in the value of the current square
+		int lightValue = light.readValue();
 		
+		// Create a state of newly discovered square 
+		WumpusWorld.State state = wumpusWorld.newState(lightValue, time);
+		
+		// Decide what to do via inference with the knowledge base
+		
+		time += 1; // Update the time counter
+		
+		
+	}
+	
+	void knowledgeBase() {
 		/*
 		 * A square [x,y] is smelly if adjacent to wumpus ( and [x,y] might
 		 * contain the wumpus of some adjacent squares are smelly. )
@@ -65,11 +72,6 @@ public class Agent {
 		 */
 		// boolean Smelly(Position p) { State[] adj = getAdj(p); for(State s : adj) if(s.STENCH & s.WUMPUS ?) return true; return false; }
 		
-		/*
-		 * A pit is OK if there is neither pit nor wumpus in [x,y]
-		 * Formally: (fA p) not(Pit(p)) or not(Wumpus(p)) => Ok(p) 
-		 */
-		// boolean Ok(Position p) { return not(Pit(p)) || not(Wumpus(p)) }
 	}
 	
 	/**
@@ -87,7 +89,35 @@ public class Agent {
 		return (Math.max(Math.abs(p1.x-p2.x), Math.abs(p1.y-p2.y)) == 1) ? true : false; 
 	}
 	
+	/**
+	 * Checks if the current state is ok or not
+	 * 
+	 * @param state to check
+	 * @return true iff ok
+	 */
+	private boolean isOk(WumpusWorld.State state) {
+		/*
+		 * A square is OK if there is neither pit nor wumpus in [x,y]
+		 * Formally: (fA p) not(Pit(p)) or not(Wumpus(p)) => Ok(p) 
+		 */
+		return (state.wumpus != 6 || state.pit != 6) ? true : false;
+	}
 	
+	private boolean isBreezy(WumpusWorld.State state) {
+		/*
+		 * A square [x,y] is breezy if adjacent to a pit ( and [x,y] might
+		 * be a pit of some adjacent squares are breezy. )
+		 * Formally: (fA s) Breezy(s) (<=)=> (tE r) Adjacent(r,s) & Pit(r)
+		 */
+		
+		return true;
+	}
+	
+	/**
+	 * Just a stupid welcome message
+	 * 
+	 * @throws InterruptedException
+	 */
 	void welcomeMsg() throws InterruptedException {
 		System.out.println("What took you so long?!\n"+
 				"Been waiting forever for you to bring me back to life");		
