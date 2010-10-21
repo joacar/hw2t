@@ -1,8 +1,4 @@
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
 
 import lejos.nxt.Button;
 import lejos.nxt.LightSensor;
@@ -13,72 +9,32 @@ import lejos.nxt.LightSensor;
  *
  */
 public class WumpusWorld {
-	private HashMap<Agent.Position, State> exploredStates;
-	private ArrayList<HashSet<State>> adjacentList;
+	private HashMap<Position, State> states;
 
-	private final int BREEZE, STENCH, GLITTER, STENCH_BREEZE, OK, 
+	public int BREEZE, STENCH, GLITTER, STENCH_BREEZE, NOTHING, OUT_OF_RANGE,
 	GLITTER_STENCH, GLITTER_BREEZE, STENCH_GLITTER_BREEZE;
-
-	public class State {
-		boolean ok, stench, glitter, breeze;
-		final boolean states[] = {ok, stench, glitter, breeze};
-		int wumpus = 0, pit = 0, time;
-
-		/**
-		 * Constructor
-		 * 
-		 * @param time the square was found
-		 * 		(discrete counter)
-		 */
-		State(int time) {
-			this.time = time;
-		}
-
-		@Override
-		public String toString() {
-			StringBuilder sb = new StringBuilder();
-			sb.append("Current state "+time+"is ");
-			for(int i = 8; i >= 1; i++) {
-				switch(i) {
-				case 1:
-					if(stench) sb.append("STENCH");
-				case 2:
-					if(glitter) sb.append("GLITTER");
-				case 3:
-					if(breeze) sb.append("BREEZE");
-				case 4:
-					if(stench && glitter) sb.append("STENCH + GLITTER");
-				case 5:
-					if(stench && breeze) sb.append("STENCH + BREEZE");
-				case 6:
-					if(breeze && glitter) sb.append("BREEZE + GLITTER");
-				case 7:
-					if(stench && glitter && breeze) sb.append("STENCH + BREEZE + GLITTER");
-				case 8:
-					if(ok) sb.append("OK");
-					return sb.toString();
-				}
-			}
-
-			return sb.toString();
-		}
-	}
+	// The limits of our world in the beginning of our exploration
+	public int xLowerLimit = Integer.MIN_VALUE, xUpperLimit = Integer.MAX_VALUE,
+	yLowerLimit = Integer.MIN_VALUE, yUpperLimit = Integer.MAX_VALUE;
 
 	WumpusWorld(LightSensor ls) {
 		/*
-		 *  Begin with calibrating the light sensors for the different colours
-		 *  representing ok, breeze, stench, etc
+		 *  Begin with calibrating the light sensors for the different shades
+		 *  between black and white representing ok, breeze, stench, etc
 		 */
 		int tempLightValue = 0;
 
 		System.out.println("Place sensor above pure black...");
 		Button.waitForPress();
+		ls.calibrateLow();
 		tempLightValue = ls.getLightValue();
-		OK = tempLightValue;
+		OUT_OF_RANGE = tempLightValue;
 
 		System.out.println("Place sensor above pure white...");
 		Button.waitForPress();
 		ls.calibrateHigh();
+		tempLightValue = ls.getLightValue();
+		NOTHING = tempLightValue;
 
 		tempLightValue = lightValue(ls, "GLITTER");
 		GLITTER = tempLightValue;
@@ -100,8 +56,6 @@ public class WumpusWorld {
 
 		tempLightValue = lightValue(ls, "STENCH + GLITTER + BREEZE");
 		STENCH_GLITTER_BREEZE = tempLightValue;
-
-		adjacentList = new ArrayList<HashSet<State>>();
 	}
 
 	/**
@@ -124,11 +78,16 @@ public class WumpusWorld {
 	 * @param lightValue ligth value of square
 	 * @return the square in form of a State
 	 */
-	public State newState(int lightValue, int time) {
-		HashSet<State> adjacentVertices = new HashSet<State>();
-
-		State state = new State(time);
-
+	public State newState(Position position, int lightValue) {
+		// Black, go back and update world limits!
+		if(lightValue == OUT_OF_RANGE) {
+			return null;
+		}
+		
+		State state = new State();
+		state.position = position;		// Position of this square
+		
+		// This must be here as it is implemented now
 		// Set variables that corresponds to the light value 
 		if(BREEZE == lightValue) {
 			state.breeze = true;
@@ -144,31 +103,64 @@ public class WumpusWorld {
 			state.glitter = state.stench = true; 
 		} else if(STENCH_GLITTER_BREEZE == lightValue) {
 			state.stench = state.glitter = state.breeze = true;
-		} else if(OK == lightValue) {		
-			state.ok = true;
+		} else if(NOTHING == lightValue) {		
+			state.nothing = true;
 		} else {
-			// else what ?
+			// Black, go back and notice the position and update limits!
+			return null;
 		}
 		
-		adjacentVertices.add(state);
+		states.put(position, state);
+		state.status = lightValue;
 		
-		adjacentList.add(time, adjacentVertices);
+		// Add neighbours
+		for(int[] pos : Agent.VALID_MOVES) {
+			int x = position.x + pos[0];
+			int y = position.y + pos[1];
+			
+			Position newPosition = new Position(x, y);
+			// Check wall condition
+			if(wallCondition(x, y) && !states.containsKey(newPosition)) {
+				states.put(newPosition, new State());
+			}
+		}
 
 		return state;
 	}
 	
 	/**
-	 * Returns an iterator 
+	 * Checks if the new position has been detectecd
+	 * as out of range. 
 	 * 
-	 * @param state
-	 * @return
+	 * @param x new x coordinate
+	 * @param y new y coordinate
+	 * @return true iff in valid range
 	 */
-	public Iterator<State> getAdjacentStates(State state) {
-		int time = state.time;
-		HashSet<State> adjacentVertices = adjacentList.get(time);
-		
-		return adjacentVertices.iterator();
+	public boolean wallCondition(int x, int y) {
+		if(x > xLowerLimit && x < xUpperLimit
+				&& y > yLowerLimit && y < yUpperLimit) return true;
+		return false;
 	}
-
-
+	
+	/**
+	 * Returns the adjacent states
+	 * 
+	 * @param state Current state
+	 * @return array of adjacent states
+	 */
+	public State[] getAdjacentStates(State state) {
+		final int[][] adjacentLocations = {{-1,0}, {1,0}, {0,-1}, {0,1}};
+		State[] adjacentStates = new State[3];
+		Position position = state.position, newPosition;
+		
+		for(int i = 0; i < adjacentLocations.length; i++) {
+			int x = position.x + adjacentLocations[i][0];
+			int y = position.y + adjacentLocations[i][1];
+			newPosition = new Position(x, y);
+			if(wallCondition(x, y) && states.containsKey(newPosition))
+				adjacentStates[i] = states.get(newPosition);
+		}
+		
+		return adjacentStates; 
+	}
 }

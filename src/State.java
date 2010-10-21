@@ -17,9 +17,10 @@
  *
  */
 public class State {
-	boolean ok, stench, glitter, breeze;
-	final boolean states[] = {ok, stench, glitter, breeze};
+	boolean nothing, stench, glitter, breeze;
+	final boolean states[] = {breeze, stench, glitter};
 	int wumpus = 0, pit = 0, time;
+	int status = -1;
 	
 	Position position;
 	
@@ -49,7 +50,7 @@ public class State {
 			case 7:
 				if(stench && glitter && breeze) sb.append("STENCH + BREEZE + GLITTER");
 			case 8:
-				if(ok) sb.append("OK");
+				if(nothing) sb.append("OK");
 				return sb.toString();
 			}
 		}
