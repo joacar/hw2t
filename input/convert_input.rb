@@ -36,6 +36,6 @@ wumpus_world.map { |col| col.reverse! }
 
 ROWS.times do |x|
        COLS.times do |y|
-	       output.puts "(#{x-X_Origin},#{y-Y_Origin}) = #{wumpus_world[x][y]}"
+	       output.puts "#{x-X_Origin} #{y-Y_Origin} #{wumpus_world[x][y]}"
        end	       
 end
