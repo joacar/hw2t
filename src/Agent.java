@@ -1,9 +1,12 @@
+import java.util.HashSet;
 import java.util.Queue;
 
 import lejos.nxt.LightSensor;
+import lejos.nxt.Motor;
 import lejos.nxt.SensorPort;
 import lejos.nxt.Sound;
 import lejos.nxt.SoundSensor;
+import lejos.robotics.Movement;
 
 /**
  * The AI for the classic and legendary game Wumpus world!
@@ -25,8 +28,12 @@ public class Agent {
 	private WumpusWorld wumpusWorld;
 	private LightSensor light;
 	private SoundSensor sound;
+	private Movement movement;
+	private Motor motor;
+	
 	private Queue<Position> queue;
-
+	private HashSet<Position> visitedStates;
+	
 	private boolean wumpusAlive = true, fetchedGold = false;
 
 	public static final int[][] VALID_MOVES = {
@@ -44,11 +51,11 @@ public class Agent {
 		sound = new SoundSensor(SensorPort.S2);
 
 		wumpusWorld = new WumpusWorld(light);
-
-		queue.add(new Position(0,0));
+		
+		queue.add(new Position(-1,0));
 		Position prevPosition = null, curPosition = null;
 		
-		// Start our journey from relative start location (0,0)
+		// Start our journey from start location (-1,0)
 		do {
 			curPosition = queue.poll();
 			explore(queue.poll(), prevPosition);
@@ -61,7 +68,7 @@ public class Agent {
 		} while(true);
 	}
 
-	void explore(Position curPosition, Position prevPosition) {
+	private void explore(Position curPosition, Position prevPosition) {
 		// Step 1. Percept
 		State state = percept(curPosition);
 
@@ -74,6 +81,7 @@ public class Agent {
 		 */
 		if(state == null) {
 			updateLimits(curPosition, prevPosition);
+			// go back to where we came from
 			return;
 		}
 
@@ -81,7 +89,25 @@ public class Agent {
 		infer(state);
 
 		// Step 3. Move out from information gathered above
+		makeMove(state);
 		
+	}
+	
+	private void makeMove(State state) {
+		State[] adjacentStates = wumpusWorld.getAdjacentStates(state);
+		
+		for(State s : adjacentStates) {
+			// The square is safe
+			if(s.pit == -1 && s.wumpus == -1) {
+				if(!visitedStates.contains(s.position)) {
+					queue.add(s.position);
+					visitedStates.add(s.position);
+				}
+			}
+		}
+		
+		
+
 	}
 
 	/**
@@ -220,7 +246,7 @@ public class Agent {
 	 * 
 	 * @param state State currently in
 	 */
-	public void setOk(State state) {
+	private void setOk(State state) {
 		State[] adjacentStates = wumpusWorld.getAdjacentStates(state);
 
 		for(State s : adjacentStates) {
@@ -279,7 +305,7 @@ public class Agent {
 	 * 
 	 * @throws InterruptedException
 	 */
-	void welcomeMsg() throws InterruptedException {
+	private void welcomeMsg() throws InterruptedException {
 		System.out.println("What took you so long?!\n"+
 		"Been waiting forever for you to bring me back to life");		
 		System.out.println("Configuring system.");

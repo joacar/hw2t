@@ -14,8 +14,9 @@ public class WumpusWorld {
 	public int BREEZE, STENCH, GLITTER, STENCH_BREEZE, NOTHING, OUT_OF_RANGE,
 	GLITTER_STENCH, GLITTER_BREEZE, STENCH_GLITTER_BREEZE;
 	// The limits of our world in the beginning of our exploration
-	public int xLowerLimit = Integer.MIN_VALUE, xUpperLimit = Integer.MAX_VALUE,
-	yLowerLimit = Integer.MIN_VALUE, yUpperLimit = Integer.MAX_VALUE;
+	private final int X_LOWER_LIMIT = -1, Y_LOWER_LIMIT = -1;
+	public int xLowerLimit = X_LOWER_LIMIT, xUpperLimit = Integer.MAX_VALUE,
+	yLowerLimit = Y_LOWER_LIMIT, yUpperLimit = Integer.MAX_VALUE;
 
 	WumpusWorld(LightSensor ls) {
 		/*
@@ -150,7 +151,7 @@ public class WumpusWorld {
 	 */
 	public State[] getAdjacentStates(State state) {
 		final int[][] adjacentLocations = {{-1,0}, {1,0}, {0,-1}, {0,1}};
-		State[] adjacentStates = new State[3];
+		State[] adjacentStates = new State[4];
 		Position position = state.position, newPosition;
 		
 		for(int i = 0; i < adjacentLocations.length; i++) {
