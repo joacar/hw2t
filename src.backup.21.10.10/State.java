@@ -17,19 +17,17 @@
  *
  */
 public class State {
-	boolean nothing, stench, glitter, breeze, visited;
+	boolean nothing, stench, glitter, breeze;
 	final boolean states[] = {breeze, stench, glitter};
-	int wumpus = 0, pit = 0, time, lightValue;
+	int wumpus = 0, pit = 0, time;
+	int status = -1;
 	
 	Position position;
 	
 	/**
 	 * Constructor
 	 */
-	State(Position position, boolean visited) {
-		this.position = position;
-		this.visited = visited;
-	}
+	State() {}
 
 	@Override
 	public String toString() {

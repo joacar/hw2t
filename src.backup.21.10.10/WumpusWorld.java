@@ -13,11 +13,9 @@ public class WumpusWorld {
 
 	public int BREEZE, STENCH, GLITTER, STENCH_BREEZE, NOTHING, OUT_OF_RANGE,
 	GLITTER_STENCH, GLITTER_BREEZE, STENCH_GLITTER_BREEZE;
-	
 	// The limits of our world in the beginning of our exploration
-	private final int X_LOWER_LIMIT = -1, Y_LOWER_LIMIT = -1;
-	public int xLowerLimit = X_LOWER_LIMIT, xUpperLimit = Integer.MAX_VALUE,
-	yLowerLimit = Y_LOWER_LIMIT, yUpperLimit = Integer.MAX_VALUE;
+	public int xLowerLimit = Integer.MIN_VALUE, xUpperLimit = Integer.MAX_VALUE,
+	yLowerLimit = Integer.MIN_VALUE, yUpperLimit = Integer.MAX_VALUE;
 
 	WumpusWorld(LightSensor ls) {
 		/*
@@ -86,9 +84,11 @@ public class WumpusWorld {
 			return null;
 		}
 		
-		State state = new State(position, true);
+		State state = new State();
+		state.position = position;		// Position of this square
 		
-		// Set variables that corresponds to the light value for the squares
+		// This must be here as it is implemented now
+		// Set variables that corresponds to the light value 
 		if(BREEZE == lightValue) {
 			state.breeze = true;
 		} else if(STENCH == lightValue) {
@@ -111,7 +111,7 @@ public class WumpusWorld {
 		}
 		
 		states.put(position, state);
-		state.lightValue = lightValue;
+		state.status = lightValue;
 		
 		// Add neighbours
 		for(int[] pos : Agent.VALID_MOVES) {
@@ -121,7 +121,7 @@ public class WumpusWorld {
 			Position newPosition = new Position(x, y);
 			// Check wall condition
 			if(wallCondition(x, y) && !states.containsKey(newPosition)) {
-				states.put(newPosition, new State(newPosition, false));
+				states.put(newPosition, new State());
 			}
 		}
 
@@ -150,7 +150,7 @@ public class WumpusWorld {
 	 */
 	public State[] getAdjacentStates(State state) {
 		final int[][] adjacentLocations = {{-1,0}, {1,0}, {0,-1}, {0,1}};
-		State[] adjacentStates = new State[4];
+		State[] adjacentStates = new State[3];
 		Position position = state.position, newPosition;
 		
 		for(int i = 0; i < adjacentLocations.length; i++) {
@@ -162,14 +162,5 @@ public class WumpusWorld {
 		}
 		
 		return adjacentStates; 
-	}
-	
-	/**
-	 * Returns the state matching the position
-	 * @param position
-	 * @return state if exists, null otherwise
-	 */
-	public State getState(Position position) {
-		return (states.containsKey(position)) ? states.get(position) : null;
 	}
 }

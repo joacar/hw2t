@@ -1,5 +1,4 @@
-import java.util.HashSet;
-import java.util.LinkedList;
+import java.util.Queue;
 
 import lejos.nxt.LightSensor;
 import lejos.nxt.SensorPort;
@@ -26,74 +25,34 @@ public class Agent {
 	private WumpusWorld wumpusWorld;
 	private LightSensor light;
 	private SoundSensor sound;
-	
-	private LinkedList<Position> queue;
-	private LinkedList<Position> path;
-	private HashSet<Position> visitedStates;
-	private HashSet<Position> dangerousStates;
-	
+	private Queue<Position> queue;
+
 	private boolean wumpusAlive = true, fetchedGold = false;
-	//private final boolean array[] = new boolean[4];
 
 	public static final int[][] VALID_MOVES = {
 		{-1,-1}, {1,1}, {1,-1}, {-1,1},	// diagonal moves
 		{-1,0}, {1,0},					// horizontal moves
 		{0,-1}, {0,1}, 					// vertical moves
 	};
-	
-	/**
-	 * Entry point. No args needed at moment.
-	 *  
-	 * @param args
-	 */
+
 	public static void main(String args[]) {
 		new Agent();
 	}
-	
-	/**
-	 * Basic constructor
-	 */
-	private Agent() {
+
+	Agent() {
 		light = new LightSensor(SensorPort.S3, true);
 		sound = new SoundSensor(SensorPort.S2);
 
 		wumpusWorld = new WumpusWorld(light);
-		
+
+		queue.add(new Position(0,0));
 		Position prevPosition = null, curPosition = null;
-		curPosition = new Position(-1,0);
-		/**
-		 * Here i declare, or states, that the direction 'north' is the
-		 * direction with increasing values along the x-axis. East is
-		 * the direction with the increasing values along the y-axis.
-		 * The direction north-east follows by a diagonal move with
-		 * increasing values along both x and y-axis.
-		 */
-		// {North, West, South, East}
-		boolean array[] = {true,false,false,false};
-		curPosition.setDirection(array);
 		
-		queue.add(curPosition);
-		
-		// Start our journey from start location (-1,0)
+		// Start our journey from relative start location (0,0)
 		do {
 			curPosition = queue.poll();
-			int result = explore(queue.poll(), prevPosition);
-			/*
-			 * If the current state is not a valid one (explore
-			 * returns -1 if thats the case, 1 otherwise), i.e
-			 * outside of the world, then we want to go back
-			 * to that one and stille keep the previous state
-			 * for the state _before_ we went out of range. 
-			 * Therefore keeping track of the path and adding
-			 * states to the path only when we are sure that
-			 * the next state is a valid one.
-			 */
-			if(result != -1) {
-				prevPosition = curPosition;
-				path.addFirst(curPosition);
-			} else {
-				prevPosition = path.peek();
-			}
+			explore(queue.poll(), prevPosition);
+			prevPosition = curPosition;
 		} while(!queue.isEmpty());
 		
 		// The gold is collected! It is time for the great escape!
@@ -102,7 +61,7 @@ public class Agent {
 		} while(true);
 	}
 
-	private int explore(Position curPosition, Position prevPosition) {
+	void explore(Position curPosition, Position prevPosition) {
 		// Step 1. Percept
 		State state = percept(curPosition);
 
@@ -110,59 +69,19 @@ public class Agent {
 		 *  If we went outside the board, the state returned
 		 *  will be null. Update the world limits relative to
 		 *  our position accordingly so we wont make this
-		 *  misstake again, go back to where we came from
-		 *  and figure out the next move.
+		 *  misstake again and choose next move available
+		 *  from the queue
 		 */
 		if(state == null) {
 			updateLimits(curPosition, prevPosition);
-			/*
-			 *  Go back to where we came from by rotating 180 degrees
-			 *  and then move forward the correct distance.
-			 */
-			MovementControl.goBack();
-			queue.addFirst(prevPosition);
-			
-			return -1;
+			return;
 		}
 
-		// Step 2. Logically infer the status of adjacent squares 
+		// Step 2. Logically infer what to do next 
 		infer(state);
 
 		// Step 3. Move out from information gathered above
-		makeMove(state);
 		
-		return 0;
-		
-	}
-	
-	private void makeMove(State state) {
-		State[] adjacentStates = wumpusWorld.getAdjacentStates(state);
-		boolean okStates[] = new boolean[adjacentStates.length];
-		boolean goBack = true;
-		
-		for(int i = 0; i < adjacentStates.length; i++) {
-			State s = adjacentStates[0];
-			/*
-			 * If the square contains neither the pit nor the
-			 * wumpus it is safe to move there. 
-			 */
-			if(s.pit <= 0 && s.wumpus <= 0) {
-				if(!visitedStates.contains(s.position)) {
-					okStates[i] = true;
-					queue.add(s.position);
-					goBack = false;
-				}
-			}
-		}
-		
-		if(goBack) {
-			MovementControl.goBack();
-		} else {
-			
-		}
-		
-		
-
 	}
 
 	/**
@@ -231,52 +150,23 @@ public class Agent {
 	private void updateLimits(Position curPosition, Position prevPosition) {
 		int diff = prevPosition.x - curPosition.x;
 		if(diff != 0) {
-			wumpusWorld.xUpperLimit = curPosition.x;
+			if(diff > 0) {	// Movement "rightwards"
+				wumpusWorld.xLowerLimit = prevPosition.x;
+				return;
+			} else {		// Movement "leftwards"
+				wumpusWorld.xUpperLimit = prevPosition.x;
+				return;
+			}
 		} else {
-			wumpusWorld.yUpperLimit = curPosition.y;
+			diff = prevPosition.y - curPosition.y;
+			if(diff > 0) {	// Movement "upwards"
+				wumpusWorld.yLowerLimit = prevPosition.y;
+				return;
+			} else {		// Movement "downwards"
+				wumpusWorld.yUpperLimit = prevPosition.y;
+				return;
+			}
 		}
-	}
-	
-	private float facingDirection(Position curPosition, Position prevPosition) {
-		int diffX = curPosition.x - prevPosition.x;
-		int diffY = curPosition.y - prevPosition.y;
-		
-		// We have moved diagonally towards increasing values of x- and y-axis
-		if(diffX > 0 && diffY > 0) {	
-			
-		} 
-		// We have moved diagonally towards decreasing values of x and increasing of y
-		else if(diffX < 0 && diffY > 0) {
-			
-		}
-		// We have moved diagonally towards decreasing values of x and y
-		else if(diffX < 0 && diffY < 0) {
-			
-		}
-		// We have moved diagonally towards increasing values of x and decreasing of y
-		else if(diffX > 0 && diffY < 0) {
-			
-		}
-		// We have moved along increasing values of x
-		else if(diffX > 0 && diffY == 0) {
-			
-		}
-		// We have moved along decreasing values of x
-		else if(diffX < 0 && diffY == 0) {
-			
-		}
-		// We have moved along decreasing values of y
-		else if(diffX == 0 && diffY < 0) {
-			
-		}
-		// We have moved along increasing values of y
-		else if(diffX == 0 && diffY > 0) {
-			
-		} else {
-			// Will never happen
-		}
-		
-		return 0f;
 	}
 
 	/**
@@ -299,10 +189,7 @@ public class Agent {
 		int lightValue = light.readValue();
 
 		// Create a state of newly discovered square 
-		State state = wumpusWorld.newState(position, lightValue);
-		visitedStates.add(state.position);
-		
-		return state;
+		return wumpusWorld.newState(position, lightValue);
 	}
 
 	/**
@@ -333,7 +220,7 @@ public class Agent {
 	 * 
 	 * @param state State currently in
 	 */
-	private void setOk(State state) {
+	public void setOk(State state) {
 		State[] adjacentStates = wumpusWorld.getAdjacentStates(state);
 
 		for(State s : adjacentStates) {
@@ -392,7 +279,7 @@ public class Agent {
 	 * 
 	 * @throws InterruptedException
 	 */
-	private void welcomeMsg() throws InterruptedException {
+	void welcomeMsg() throws InterruptedException {
 		System.out.println("What took you so long?!\n"+
 		"Been waiting forever for you to bring me back to life");		
 		System.out.println("Configuring system.");
