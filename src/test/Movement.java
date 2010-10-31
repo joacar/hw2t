@@ -37,6 +37,9 @@ public class Movement {
 		h = navigator.getHeading();
 		LCD.drawString("["+x+","+y+"] Heading: "+h, 0, 1);
 		
+		// Go forward and return immediately
+		navigator.travel(20f, true);
+		
 		System.exit(0);
 	}
 }

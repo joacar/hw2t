@@ -77,7 +77,7 @@ public class Agent {
 		// Start our journey from start location (-1,0)
 		do {
 			curPosition = queue.poll();
-			int result = explore(queue.poll(), prevPosition);
+			int result = explore(curPosition, prevPosition);
 			/*
 			 * If the current state is not a valid one (explore
 			 * returns -1 if thats the case, 1 otherwise), i.e
@@ -160,9 +160,6 @@ public class Agent {
 		} else {
 			
 		}
-		
-		
-
 	}
 
 	/**
@@ -237,7 +234,7 @@ public class Agent {
 		}
 	}
 	
-	private float facingDirection(Position curPosition, Position prevPosition) {
+	private float heading(Position curPosition, Position prevPosition) {
 		int diffX = curPosition.x - prevPosition.x;
 		int diffY = curPosition.y - prevPosition.y;
 		
