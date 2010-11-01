@@ -6,7 +6,8 @@ import lejos.nxt.Motor;
 import lejos.nxt.SensorPort;
 import lejos.nxt.Sound;
 import lejos.nxt.SoundSensor;
-import robot.*;
+import robot.CalibrateLightSensor;
+import robot.Move;
 /**
  * The AI for the classic and legendary game Wumpus world!
  * 
