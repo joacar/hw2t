@@ -15,7 +15,7 @@ public class Movement {
 		
 		// Get the new position
 		float x = navigator.getX(), y = navigator.getY(), h = navigator.getHeading();
-		LCD.drawString("["+x+","+y+"] Heading: "+h, 0, 1);
+		LCD.drawString("["+x+","+y+"] Heading: "+h, 2, 3);
 		
 		// Turn 90 degrees left and move forward 20 cm
 		navigator.rotate(90f);
@@ -25,7 +25,7 @@ public class Movement {
 		x = navigator.getX();
 		y = navigator.getY();
 		h = navigator.getHeading();
-		LCD.drawString("["+x+","+y+"] Heading: "+h, 0, 1);
+		LCD.drawString("["+x+","+y+"] Heading: "+h, 4, 5);
 		
 		// Turn 90 degrees right and move forward 20 cm
 		navigator.rotate(-90f);
@@ -35,7 +35,7 @@ public class Movement {
 		x = navigator.getX();
 		y = navigator.getY();
 		h = navigator.getHeading();
-		LCD.drawString("["+x+","+y+"] Heading: "+h, 0, 1);
+		LCD.drawString("["+x+","+y+"] Heading: "+h, 6, 7);
 		
 		// Go forward and return immediately
 		navigator.travel(20f, true);

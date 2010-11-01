@@ -2,10 +2,11 @@ import java.util.HashSet;
 import java.util.LinkedList;
 
 import lejos.nxt.LightSensor;
+import lejos.nxt.Motor;
 import lejos.nxt.SensorPort;
 import lejos.nxt.Sound;
 import lejos.nxt.SoundSensor;
-
+import robot.*;
 /**
  * The AI for the classic and legendary game Wumpus world!
  * 
@@ -23,22 +24,28 @@ import lejos.nxt.SoundSensor;
  *
  */
 public class Agent {
-	private WumpusWorld wumpusWorld;
+	private final float TRAVEL_STRAIGHT = 27.9f;
+	private final float TRAVEL_PERP = 21.6f;
+	private final float TRAVEL_DIAG = 35.3f;
+	
 	private LightSensor light;
 	private SoundSensor sound;
+	private Move move;
 	
+	private WumpusWorld wumpusWorld;
 	private LinkedList<Position> queue;
 	private LinkedList<Position> path;
-	private HashSet<Position> visitedStates;
+	private HashSet<Position> visited;
 	private HashSet<Position> dangerousStates;
-	
+	private Heading heading;
 	private boolean wumpusAlive = true, fetchedGold = false;
 	//private final boolean array[] = new boolean[4];
 
 	public static final int[][] VALID_MOVES = {
-		{-1,-1}, {1,1}, {1,-1}, {-1,1},	// diagonal moves
 		{-1,0}, {1,0},					// horizontal moves
 		{0,-1}, {0,1}, 					// vertical moves
+		{-1,-1}, {1,1}, {1,-1}, {-1,1},	// diagonal moves
+		
 	};
 	
 	/**
@@ -54,54 +61,77 @@ public class Agent {
 	 * Basic constructor
 	 */
 	private Agent() {
+		// Set up the movement. Parameters are (Motor left, Motor right)
+		move = new Move(Motor.A, Motor.C);
+		// Initialize light sensor
 		light = new LightSensor(SensorPort.S3, true);
-		sound = new SoundSensor(SensorPort.S2);
-
-		wumpusWorld = new WumpusWorld(light);
+		// Calibrate the newly created light sensor
+		int squareValues[] = new CalibrateLightSensor(light).getLightValues();
+		// Update the corresponding entries in wumpus world
+		wumpusWorld = new WumpusWorld(squareValues);
 		
-		Position prevPosition = null, curPosition = null;
-		curPosition = new Position(-1,0);
-		/**
-		 * Here i declare, or states, that the direction 'north' is the
-		 * direction with increasing values along the x-axis. East is
-		 * the direction with the increasing values along the y-axis.
-		 * The direction north-east follows by a diagonal move with
-		 * increasing values along both x and y-axis.
+		/*
+		 *  The start location is always [0,0] and we will always
+		 *  move "forward" to [1,0] facing "north". Actually we 
+		 *  have no clue about positions or compass directions,
+		 *  they are all relative to our starting location. 
 		 */
-		// {North, West, South, East}
-		boolean array[] = {true,false,false,false};
-		curPosition.setDirection(array);
+		Position origin = new Position(0, 0);
+		heading = new Heading(Direction.NORTH, null);	// Heading "North"
+		origin.heading = heading.getHeading();
 		
-		queue.add(curPosition);
+		move.travel(TRAVEL_STRAIGHT);
 		
-		// Start our journey from start location (-1,0)
-		do {
-			curPosition = queue.poll();
-			int result = explore(curPosition, prevPosition);
-			/*
-			 * If the current state is not a valid one (explore
-			 * returns -1 if thats the case, 1 otherwise), i.e
-			 * outside of the world, then we want to go back
-			 * to that one and stille keep the previous state
-			 * for the state _before_ we went out of range. 
-			 * Therefore keeping track of the path and adding
-			 * states to the path only when we are sure that
-			 * the next state is a valid one.
-			 */
-			if(result != -1) {
-				prevPosition = curPosition;
-				path.addFirst(curPosition);
-			} else {
-				prevPosition = path.peek();
+		
+		// Movement to the origin
+		State base = percept(origin);
+		
+		queue.add(origin);
+		while(!fetchedGold) {
+			// Fetch all the adjacent squares and add the safe ones to the queue
+			State adjacent[] = wumpusWorld.getAdjacentStates(base);
+			for(State s : adjacent) {
+				if(!visited.contains(s) && s.wumpus <= 0 && s.pit <= 0) {
+					queue.add(s.position);
+					visited.add(s.position);
+				}
 			}
-		} while(!queue.isEmpty());
-		
-		// The gold is collected! It is time for the great escape!
-		do {
-			// getTheFuckOutOfThisPlace()
-		} while(true);
+			
+			// For those adjacent squares added, search them and go back to base
+			while(!queue.isEmpty()) {
+				// Get the next position
+				Position next = queue.poll();
+				// Move the robot to that position
+				// Actual movement needed
+				State state = percept(next);
+				// If state is out of range, then go straight back
+				if(state == null) {
+					// Go back 
+				} else {
+					// Infer what we can from the kb
+					infer(state);
+				}
+				
+				// If queue is empty, make the last adjacent square the new base
+				if(queue.isEmpty()) {
+					/*
+					 *  If last square was out of range, then we have to think
+					 *  of something else. Perheps chose one of the adjacent
+					 *  by random and make it the new base.
+					 */
+					if(state == null) {
+						
+					}
+					base = state;
+					break;
+				}
+				
+				// Move the robot back to the base position
+				// Actual movement needed
+			}
+		}
 	}
-
+	
 	private int explore(Position curPosition, Position prevPosition) {
 		// Step 1. Percept
 		State state = percept(curPosition);
@@ -119,7 +149,6 @@ public class Agent {
 			 *  Go back to where we came from by rotating 180 degrees
 			 *  and then move forward the correct distance.
 			 */
-			MovementControl.goBack();
 			queue.addFirst(prevPosition);
 			
 			return -1;
@@ -136,30 +165,6 @@ public class Agent {
 	}
 	
 	private void makeMove(State state) {
-		State[] adjacentStates = wumpusWorld.getAdjacentStates(state);
-		boolean okStates[] = new boolean[adjacentStates.length];
-		boolean goBack = true;
-		
-		for(int i = 0; i < adjacentStates.length; i++) {
-			State s = adjacentStates[0];
-			/*
-			 * If the square contains neither the pit nor the
-			 * wumpus it is safe to move there. 
-			 */
-			if(s.pit <= 0 && s.wumpus <= 0) {
-				if(!visitedStates.contains(s.position)) {
-					okStates[i] = true;
-					queue.add(s.position);
-					goBack = false;
-				}
-			}
-		}
-		
-		if(goBack) {
-			MovementControl.goBack();
-		} else {
-			
-		}
 	}
 
 	/**
@@ -171,6 +176,8 @@ public class Agent {
 	 * @param state State currently in
 	 */
 	private void infer(State state) {
+		if(state == null)	return;
+		
 		if(state.nothing) {	// !state.breeze && !state.stench
 			setOk(state);
 		} else {
@@ -218,7 +225,6 @@ public class Agent {
 	 * out of course... Well, at least at one side of
 	 * the world.
 	 * 
-	 *
 	 * ATTENTION! Might have some trouble if we go out
 	 * of range in a diagonal move.. ATTENTION!
 	 * 
@@ -292,12 +298,16 @@ public class Agent {
 	 * @return State newly discovered
 	 */
 	private State percept(Position position) {
+		// Implement the actual movement of the robot
+		// ======== IMPORTANT =========
+		
 		// Read in the value of the current square
 		int lightValue = light.readValue();
 
 		// Create a state of newly discovered square 
 		State state = wumpusWorld.newState(position, lightValue);
-		visitedStates.add(state.position);
+		// Add this state as visited
+		visited.add(state.position);
 		
 		return state;
 	}
@@ -324,9 +334,10 @@ public class Agent {
 
 	/**
 	 * If the state we are currently in is neither
-	 * breezy nor smelly, then we can conclude that
-	 * the adjacent squares are free from the wumpus
-	 * or the pit
+	 * breezy nor smelly (it is nothing), then we 
+	 * can conclude that the adjacent squares are 
+	 * free from the either wumpus or the pit or
+	 * both
 	 * 
 	 * @param state State currently in
 	 */
@@ -377,7 +388,10 @@ public class Agent {
 		State[] adjacentStates = wumpusWorld.getAdjacentStates(state);
 
 		for(State s : adjacentStates) {
-			// If square is not ok and they are adjacent (double check..), it might be the wumpus
+			/*
+			 *  If square is _not_ containing anything and are adjacent to a smelly
+			 *  square that square might be home of the horrible wumpus
+			 */
 			if(!s.nothing && adjacent(state, s)) {
 				s.wumpus += 1;		// Increase the chance that there is a wumpus in that square
 			}

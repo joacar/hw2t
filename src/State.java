@@ -17,7 +17,7 @@
  *
  */
 public class State {
-	boolean nothing, stench, glitter, breeze, visited;
+	boolean nothing, stench, glitter, breeze, out_of_range, visited;
 	final boolean states[] = {breeze, stench, glitter};
 	int wumpus = 0, pit = 0, time, lightValue;
 	

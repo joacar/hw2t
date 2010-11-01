@@ -4,10 +4,10 @@ import java.util.HashMap;
 import java.util.Scanner;
 
 public class TestWorld {
-	private HashMap<Position,Integer> testworld;
+	private HashMap<Position,Integer> testWorld;
 
 	public TestWorld(String inputFile){
-		testworld = new HashMap<Position,Integer>();
+		testWorld = new HashMap<Position,Integer>();
 		
 		String path = "../input/" + inputFile;
 		Scanner s = null;
@@ -15,7 +15,7 @@ public class TestWorld {
 			s = new Scanner((new File(path)));
 			while(s.hasNext()){
 				Position pos = new Position(s.nextInt(),s.nextInt());
-				testworld.put(pos,new Integer(s.nextInt()));
+				testWorld.put(pos,new Integer(s.nextInt()));
 			}
 		} catch (FileNotFoundException e) {
 			System.err.println("File not found: " + path);
@@ -24,7 +24,7 @@ public class TestWorld {
 	}
 	
 	public int getPercept(int x, int y){
-		return testworld.get(new Position(x,y));
+		return testWorld.get(new Position(x,y));
 	}
 	
 	public static void main(String[] args){
