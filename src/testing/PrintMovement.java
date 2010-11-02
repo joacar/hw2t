@@ -66,8 +66,8 @@ public class PrintMovement {
 	public void print(Position cur, Position prev, State state) {
 		Position aCur, aPrev;
 		
-		System.out.printf("Moved from [%d,%d] to [%d,%d] facing %f"
-				,prev.x, prev.x, cur.x, cur.y, cur.heading);
+		System.out.printf("Moved from [%d,%d] to [%d,%d] facing %s"
+				,prev.x, prev.x, cur.x, cur.y, cur.getHeadingString());
 		
 		aCur = coordinateMap.get(cur);
 		aPrev = coordinateMap.get(prev);

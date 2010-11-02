@@ -1,7 +1,7 @@
 /**
  * Keeps track of what direction the robot
  * is currently positioned.
-
+ *
  * y|
  *  |	  E 
  *  | S <-|-> N
@@ -20,15 +20,15 @@
  */
 public class Heading {
 	private float heading = -1;
-	
+	private String direction = null;
 	/**
-	 * Constructor taking two Directions as input
+	 * Basic constructor
 	 * 
-	 * @param d1 First Direction
-	 * @param d2 Second Direction
+	 * @param dir Direction dir
 	 */
-	Heading(Direction d1, Direction d2) {
-		this.heading = d1.getDirection(d1, d2);
+	public Heading(Direction dir) {
+		this.heading = dir.getHeading();
+		this.direction = setHeadingString();
 	}
 	
 	/**
@@ -38,5 +38,35 @@ public class Heading {
 	 */
 	public float getHeading() {
 		return heading;
+	}
+	
+	/**
+	 * Changes the heading
+	 * 
+	 * @param dir Direction dir
+	 */
+	public void changeHeading(Direction dir) {
+		this.heading = dir.getHeading();
+	}
+	
+	/**
+	 * Returns the directions as a string
+	 * 
+	 * @return heading String heading
+	 */
+	private String setHeadingString() {
+		String heading = null;
+		for(Direction dir : Direction.values()) 
+			if(dir.getHeading() == this.heading) heading = dir.name();
+		return heading;
+	}
+	
+	/**
+	 * Returns the directions as a string
+	 * 
+	 * @return heading String heading
+	 */
+	public String getHeadingString() {
+		return direction;
 	}
 }

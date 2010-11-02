@@ -38,7 +38,6 @@ public class Agent {
 	private LinkedList<Position> path;
 	private HashSet<Position> visited;
 	private HashSet<Position> dangerousStates;
-	private Heading heading;
 	private boolean wumpusAlive = true, fetchedGold = false;
 	//private final boolean array[] = new boolean[4];
 
@@ -63,13 +62,13 @@ public class Agent {
 	 */
 	private Agent() {
 		// Set up the movement. Parameters are (Motor left, Motor right)
-		move = new Move(Motor.A, Motor.C);
+		//move = new Move(Motor.A, Motor.C);
 		// Initialize light sensor
-		light = new LightSensor(SensorPort.S3, true);
+		//light = new LightSensor(SensorPort.S3, true);
 		// Calibrate the newly created light sensor
-		int squareValues[] = new CalibrateLightSensor(light).getLightValues();
+		//int squareValues[] = new CalibrateLightSensor(light).getLightValues();
 		// Update the corresponding entries in wumpus world
-		wumpusWorld = new WumpusWorld(squareValues);
+		//wumpusWorld = new WumpusWorld(squareValues);
 		
 		/*
 		 *  The start location is always [0,0] and we will always
@@ -78,9 +77,8 @@ public class Agent {
 		 *  they are all relative to our starting location. 
 		 */
 		Position origin = new Position(0, 0);
-		heading = new Heading(Direction.NORTH, null);	// Heading "North"
-		origin.heading = heading.getHeading();
-		
+		origin.setHeading(new Heading(Direction.NORTH));
+						
 		move.travel(TRAVEL_STRAIGHT);
 		
 		
@@ -241,46 +239,41 @@ public class Agent {
 		}
 	}
 	
-	private float heading(Position curPosition, Position prevPosition) {
-		int diffX = curPosition.x - prevPosition.x;
-		int diffY = curPosition.y - prevPosition.y;
+	/**
+	 * Gives the heading of a certain movement as
+	 * a float. 
+	 * 
+	 * @param cur Position current
+	 * @param prev Position previous
+	 * @return
+	 */
+	private float heading(Position cur, Position prev) {
+		int diffX = cur.x - prev.x;
+		int diffY = cur.y - prev.y;
 		
-		// We have moved diagonally towards increasing values of x- and y-axis
-		if(diffX > 0 && diffY > 0) {	
-			
-		} 
-		// We have moved diagonally towards decreasing values of x and increasing of y
-		else if(diffX < 0 && diffY > 0) {
-			
-		}
-		// We have moved diagonally towards decreasing values of x and y
-		else if(diffX < 0 && diffY < 0) {
-			
-		}
-		// We have moved diagonally towards increasing values of x and decreasing of y
-		else if(diffX > 0 && diffY < 0) {
-			
-		}
-		// We have moved along increasing values of x
-		else if(diffX > 0 && diffY == 0) {
-			
-		}
-		// We have moved along decreasing values of x
-		else if(diffX < 0 && diffY == 0) {
-			
-		}
-		// We have moved along decreasing values of y
-		else if(diffX == 0 && diffY < 0) {
-			
-		}
-		// We have moved along increasing values of y
-		else if(diffX == 0 && diffY > 0) {
-			
+		if(diffX > 0) {
+			if(diffY == 1) {
+				return 0.5f;
+			} else if(diffY == -1) {
+				return 1.5f;
+			} else {
+				return 1f;
+			}
+		} else if(diffX < 0) {
+			if(diffY == 1) {
+				return 3.5f;
+			} else if(diffY == -1) {
+				return 1.5f;
+			} else {
+				return 3f;
+			}
 		} else {
-			// Will never happen
+			if(diffY > 0) {
+				return 4f;
+			} else {
+				return 3f;
+			}
 		}
-		
-		return 0f;
 	}
 
 	/**
