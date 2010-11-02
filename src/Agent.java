@@ -1,3 +1,4 @@
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 
@@ -38,6 +39,8 @@ public class Agent {
 	private LinkedList<Position> path;
 	private HashSet<Position> visited;
 	private HashSet<Position> dangerousStates;
+	
+	private HashMap<Position, Float> dirLookUp;
 	private boolean wumpusAlive = true, fetchedGold = false;
 	//private final boolean array[] = new boolean[4];
 
@@ -54,7 +57,21 @@ public class Agent {
 	 * @param args
 	 */
 	public static void main(String args[]) {
-		new Agent();
+		if(args.length != 1) {
+			new Agent();
+		} else {
+			new Agent(args[0]);
+		}
+	}
+	
+	/**
+	 * Constructor taking an argument
+	 * 
+	 * @param inputFile the converted file
+	 * 		(See GenerateWumpusWorld for info)
+	 */
+	private Agent(String inputFile) {
+		TestWorld world = new TestWorld(inputFile);
 	}
 	
 	/**
@@ -62,13 +79,17 @@ public class Agent {
 	 */
 	private Agent() {
 		// Set up the movement. Parameters are (Motor left, Motor right)
-		//move = new Move(Motor.A, Motor.C);
+		move = new Move(Motor.A, Motor.C);
 		// Initialize light sensor
-		//light = new LightSensor(SensorPort.S3, true);
+		light = new LightSensor(SensorPort.S3, true);
 		// Calibrate the newly created light sensor
-		//int squareValues[] = new CalibrateLightSensor(light).getLightValues();
-		// Update the corresponding entries in wumpus world
-		//wumpusWorld = new WumpusWorld(squareValues);
+		int squareValues[] = new CalibrateLightSensor(light).getLightValues();
+		// Set up wumpus world with the values obtained from calibrating
+		wumpusWorld = new WumpusWorld(squareValues);
+		
+		// Set up a directions table
+		dirLookUp = new HashMap<Position, Float>(8);
+		setUpDirLookUp();
 		
 		/*
 		 *  The start location is always [0,0] and we will always
@@ -131,6 +152,31 @@ public class Agent {
 		}
 	}
 	
+	/**
+	 * Index the relative positions to their corresponding
+	 * direction as a float value. Instead of calculating
+	 * each direction trough the changes in the coordinates
+	 * they can be accessed instantly with this table
+	 */
+	private void setUpDirLookUp() {
+		/*
+		 * <=== IMPORTANT ===>
+		 * Must be sorted the same way as Direction enum
+		 */
+		int[][] validMoves = {
+			{1,1}, {1,0}, {1,-1}, {0,-1}, {-1,-1}, {0,-1}, {-1,1}, {0,1} 
+		};
+		
+		int i = 0;
+		for(Direction dir : Direction.values()) {
+			i = dir.ordinal();
+			int x = validMoves[i][0];
+			int y = validMoves[i][1];
+			
+			dirLookUp.put(new Position(x,y), new Float(dir.getHeading()));
+		}
+	}
+	
 	private int explore(Position curPosition, Position prevPosition) {
 		// Step 1. Percept
 		State state = percept(curPosition);
@@ -143,7 +189,6 @@ public class Agent {
 		 *  and figure out the next move.
 		 */
 		if(state == null) {
-			updateLimits(curPosition, prevPosition);
 			/*
 			 *  Go back to where we came from by rotating 180 degrees
 			 *  and then move forward the correct distance.
@@ -215,31 +260,12 @@ public class Agent {
 			}
 		}
 	}
-
-	/**
-	 * If we move outside the world, we would
-	 * like the new at the boundaries. Here
-	 * we find them and update are world accordingly
-	 * so that we can wonder around without straying
-	 * out of course... Well, at least at one side of
-	 * the world.
-	 * 
-	 * ATTENTION! Might have some trouble if we go out
-	 * of range in a diagonal move.. ATTENTION!
-	 * 
-	 * @param curPosition current position
-	 * @param prevPosition previous position
-	 */
-	private void updateLimits(Position curPosition, Position prevPosition) {
-		int diff = prevPosition.x - curPosition.x;
-		if(diff != 0) {
-			wumpusWorld.xUpperLimit = curPosition.x;
-		} else {
-			wumpusWorld.yUpperLimit = curPosition.y;
-		}
-	}
 	
 	/**
+	 * === NOT NEEDED, I THINK :D ===
+	 * === USE dirLookUp instead that is initialized ===
+	 * === at start up ====
+	 * 
 	 * Gives the heading of a certain movement as
 	 * a float. 
 	 * 
