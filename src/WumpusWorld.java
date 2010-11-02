@@ -8,7 +8,7 @@ import lejos.nxt.LightSensor;
  * @author a0075840a and a0075885l
  *
  */
-public class WumpusWorld {
+public class WumpusWorld implements World {
 	private HashMap<Position, State> states;
 	
 	public int NOTHING, OUT_OF_RANGE,BREEZE, STENCH, GLITTER, STENCH_BREEZE,
@@ -65,12 +65,12 @@ public class WumpusWorld {
 		}
 		
 		states.put(position, state);
-		state.lightValue = value;
+		state.value = value;
 		
 		// Add neighbours
 		for(int[] pos : Agent.VALID_MOVES) {
-			int x = position.x + pos[0];
-			int y = position.y + pos[1];
+			int x = position.getX() + pos[0];
+			int y = position.getY() + pos[1];
 			
 			Position newPosition = new Position(x, y);
 			// Check that the state is not already added
@@ -97,33 +97,17 @@ public class WumpusWorld {
 	}
 	
 	/**
-	 * Returns the adjacent states
-	 * 
-	 * @param state Current state
-	 * @return array of adjacent states
-	 */
-	public State[] getAdjacentStates(State state) {
-		final int[][] adjacentLocations = Agent.VALID_MOVES; //{{-1,0}, {1,0}, {0,-1}, {0,1}};
-		State[] adjacentStates = new State[8];
-		Position position = state.position, newPosition;
-		
-		for(int i = 0; i < adjacentLocations.length; i++) {
-			int x = position.x + adjacentLocations[i][0];
-			int y = position.y + adjacentLocations[i][1];
-			newPosition = new Position(x, y);
-			if(wallCondition(x, y) && states.containsKey(newPosition))
-				adjacentStates[i] = states.get(newPosition);
-		}
-		
-		return adjacentStates; 
-	}
-	
-	/**
 	 * Returns the state matching the position
 	 * @param position
 	 * @return state if exists, null otherwise
 	 */
 	public State getState(Position position) {
 		return (states.containsKey(position)) ? states.get(position) : null;
+	}
+
+	@Override
+	public boolean stateExists(Position position) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 }

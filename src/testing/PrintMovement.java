@@ -67,17 +67,17 @@ public class PrintMovement {
 		Position aCur, aPrev;
 		
 		System.out.printf("Moved from [%d,%d] to [%d,%d] facing %s"
-				,prev.x, prev.x, cur.x, cur.y, cur.getHeadingString());
+				,prev.getX(), prev.getY(), cur.getX(), cur.getY(), cur.getHeadingString());
 		
 		aCur = coordinateMap.get(cur);
 		aPrev = coordinateMap.get(prev);
-		
-		wumpusWorld[aPrev.x][aPrev.y] = "0";
-		wumpusWorld[aCur.x][aCur.y] = "R";
+		 
+		wumpusWorld[aPrev.getX()][aPrev.getY()] = "0";
+		wumpusWorld[aCur.getX()][aCur.getY()] = "R";
 		
 		for(int[] pos : VALID_MOVES) {
-			int x = aCur.x + pos[0];
-			int y = aCur.y + pos[1];
+			int x = aCur.getX() + pos[0];
+			int y = aCur.getY() + pos[1];
 			
 			// Would be fine to se that flags are set as they should
 			wumpusWorld[x][y] = ""; 

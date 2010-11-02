@@ -17,9 +17,10 @@
  *
  */
 public class State {
-	boolean nothing, stench, glitter, breeze, out_of_range, visited;
+	boolean nothing, stench, glitter, breeze, border, visited, ok,
+		pit, wumpus;
 	final boolean states[] = {breeze, stench, glitter};
-	int wumpus = 0, pit = 0, time, lightValue;
+	int wumpusP = 0, pitP = 0, time, value;
 	
 	Position position;
 	
@@ -30,7 +31,44 @@ public class State {
 		this.position = position;
 		this.visited = visited;
 	}
-
+	
+	/**
+	 * The state is ok
+	 */
+	public void setNothing() { nothing = ok = visited = true; }
+	
+	/**
+	 * The state is a pit
+	 */
+	public void setPit() { pit = true; nothing = ok = visited = wumpus = false; }
+	
+	/**
+	 * Set the status value
+	 * @param value status
+	 */
+	public void setValue(int value) { this.value = value; }
+	
+	/**
+	 * Returns the status value
+	 * @return status value
+	 */
+	public int getValue() { return value; }
+	
+	/**
+	 * The state is the wumpus home
+	 */
+	public void setWumpus() { wumpus = true; nothing = ok = visited = pit = false; }
+	
+	/**
+	 * State is visited
+	 */
+	public void setVisited() { visited = true; }
+	
+	/**
+	 * State is out of range
+	 */
+	public void setBorder() { border = true; }
+	
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
@@ -56,7 +94,6 @@ public class State {
 				return sb.toString();
 			}
 		}
-
 		return sb.toString();
 	}
 }

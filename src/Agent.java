@@ -25,7 +25,7 @@ import robot.Move;
  * @author a0075840a and a0075885l
  *
  */
-public class Agent {
+public class Agent implements Ai {
 	private final float TRAVEL_STRAIGHT = 27.9f;
 	private final float TRAVEL_PERP = 21.6f;
 	private final float TRAVEL_DIAG = 35.3f;
@@ -57,21 +57,7 @@ public class Agent {
 	 * @param args
 	 */
 	public static void main(String args[]) {
-		if(args.length != 1) {
-			new Agent();
-		} else {
-			new Agent(args[0]);
-		}
-	}
-	
-	/**
-	 * Constructor taking an argument
-	 * 
-	 * @param inputFile the converted file
-	 * 		(See GenerateWumpusWorld for info)
-	 */
-	private Agent(String inputFile) {
-		TestWorld world = new TestWorld(inputFile);
+		new Agent();
 	}
 	
 	/**
@@ -98,8 +84,8 @@ public class Agent {
 		 *  they are all relative to our starting location. 
 		 */
 		Position origin = new Position(0, 0);
-		origin.setHeading(new Heading(Direction.NORTH));
-						
+		origin.setHeading(Direction.FORWARD);
+		
 		move.travel(TRAVEL_STRAIGHT);
 		
 		
@@ -262,46 +248,27 @@ public class Agent {
 	}
 	
 	/**
-	 * === NOT NEEDED, I THINK :D ===
-	 * === USE dirLookUp instead that is initialized ===
-	 * === at start up ====
+	 * Returns the adjacent states to the position specified
 	 * 
-	 * Gives the heading of a certain movement as
-	 * a float. 
-	 * 
-	 * @param cur Position current
-	 * @param prev Position previous
-	 * @return
+	 * @param position current
+	 * @return array of adjacent states
 	 */
-	private float heading(Position cur, Position prev) {
-		int diffX = cur.x - prev.x;
-		int diffY = cur.y - prev.y;
+	public State[] getAdjacentStates(Position position) {
+		final int[][] adjacentLocations = Agent.VALID_MOVES;
+		int length = adjacentLocations.length;
+		State[] adjacentStates = new State[length];
+		Position newPosition;
 		
-		if(diffX > 0) {
-			if(diffY == 1) {
-				return 0.5f;
-			} else if(diffY == -1) {
-				return 1.5f;
-			} else {
-				return 1f;
-			}
-		} else if(diffX < 0) {
-			if(diffY == 1) {
-				return 3.5f;
-			} else if(diffY == -1) {
-				return 1.5f;
-			} else {
-				return 3f;
-			}
-		} else {
-			if(diffY > 0) {
-				return 4f;
-			} else {
-				return 3f;
-			}
+		for(int i = 0; i < length; i++) {
+			int x = position.getX() + adjacentLocations[i][0];
+			int y = position.getY() + adjacentLocations[i][1];
+			newPosition = new Position(x, y);
+			if(wumpusWorld.stateExists(newPosition))
+				adjacentStates[i] = wumpusWorld.getState(newPosition);
 		}
+		
+		return adjacentStates; 
 	}
-
 	/**
 	 * Just a functions that indicates that we have found and
 	 * retrieved the gold
@@ -344,7 +311,8 @@ public class Agent {
 		 * A square [i,j] is adjacent to [x,y] if, (fA x,y,i,j) |x-i| or |y-j|
 		 * Formally: (fA i,j,x,y) Adjacent([i,j], [x,y]) <=> (|x-i| or |y-j|) 
 		 */
-		int x = s1.position.x, y = s1.position.y, i = s2.position.x, j = s2.position.y;
+		int x = s1.position.getX(), y = s1.position.getY(), 
+		i = s2.position.getX(), j = s2.position.getY();
 
 		if(x+1 == i && y == j ||  x-1 == i && y == j 
 				|| x == i && y+1 == j || x == i && y-1 == j) return true;
@@ -434,5 +402,11 @@ public class Agent {
 		Thread.sleep(10);
 		System.out.print(".");
 		System.out.println("System updated and ready");
+	}
+
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+		
 	}
 }

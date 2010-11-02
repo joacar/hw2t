@@ -12,9 +12,9 @@ import lejos.nxt.LightSensor;
  */
 public class CalibrateLightSensor {
 	private enum Status {
-		NOTHING, OUT_OF_RANGE, BREEZE, STENCH, GLITTER,	STENCH_BREEZE,
+		NOTHING, BORDER, BREEZE, STENCH, GLITTER, STENCH_BREEZE,
 		GLITTER_STENCH, GLITTER_BREEZE, STENCH_GLITTER_BREEZE }
-	private final int NUMBER_OF_SHADES = 9;
+	private final int NUMBER_OF_SHADES = Status.values().length;
 	private final int STATUS[] = new int[NUMBER_OF_SHADES];
 	
 	/**
@@ -25,30 +25,29 @@ public class CalibrateLightSensor {
 		 *  Begin with calibrating the light sensors for the different shades
 		 *  between black and white representing ok, breeze, stench, etc
 		 */
-		for(Status s : Status.values()) {
-			int i = s.ordinal();
-			STATUS[i] = lightValue(ls, s.name(), i);
-		}
+		for(Status s : Status.values())
+			STATUS[s.ordinal()] = lightValue(ls, s);
 	}
 	
 	/**
 	 * Does what it does and did what it used to do
 	 *  
 	 * @param ls LightSensor ls
-	 * @param text String text to show
+	 * @param status Status enum
 	 * @return int value representing light
 	 */
-	private int lightValue(LightSensor ls, String text, int i) {	
-		if(i == 0) {
+	private int lightValue(LightSensor ls, Status status) {	
+		switch(status) {
+		case NOTHING:
 			System.out.println("Place sensor above pure white...");
 			Button.waitForPress();
 			ls.calibrateHigh();
-		} else if(i == 1) {
+		case BORDER:
 			System.out.println("Place sensor above pure black...");
 			Button.waitForPress();
 			ls.calibrateLow();
-		} else {
-			System.out.println("Place sensor above shade for "+text);
+		default:
+			System.out.println("Place sensor above shade for "+status);
 			Button.waitForPress();
 		}
 		return ls.getLightValue();
@@ -62,5 +61,4 @@ public class CalibrateLightSensor {
 	public int[] getLightValues() {
 		return STATUS;
 	}
-
 }

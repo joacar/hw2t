@@ -20,8 +20,9 @@
  * 
  */
 public class Position {
-	public int x, y;				// x,y coordinates
-	private Heading heading = null;	// Heading class
+	private int x, y;				// x,y coordinates
+	private float heading;			// heading as a float
+	private Direction direction;	// direction looking
 	
 	/**
 	 * Basic constructor taking two parameters
@@ -34,30 +35,71 @@ public class Position {
 	}
 	
 	/**
+	 * Constructor taking three parameters
+	 * 
+	 * @param x coordinate
+	 * @param y coordinate
+	 * @param direction Direction
+	 */
+	Position(int x, int y, Direction heading) {
+		this.x = x; this.y = y;
+		setHeading(heading);
+	}
+	
+	/**
 	 * Set the current heading
 	 * 
 	 * @param heading Heading 
 	 */
-	public void setHeading(Heading heading) {
-		this.heading = heading;
+	public void setHeading(Direction heading) {
+		this.heading = heading.getHeading();
+		this.direction = heading;
 	}
+	
+	/**
+	 * Get the heading we are facing as a enum
+	 * of type Direction
+	 * 
+	 * @return heading as a enum
+	 */
+	public Direction getHeading() { return direction; }
 	
 	/**
 	 * Get the heading we are facing as a string
 	 * 
 	 * @return heading as a String
 	 */
-	public String getHeadingString() {
-		return heading.getHeadingString();
-	}
+	public String getHeadingString() { return direction.name(); }
 	
 	/**
 	 * Get the heading we are facing as a float
 	 * 
 	 * @return heading as a float
 	 */
-	public float getHeadingFloat() {
-		return heading.getHeading();
+	public float getHeadingFloat() { return heading; }
+	
+	/**
+	 * Returns x coordinate
+	 * 
+	 * @return x coordinate
+	 */
+	public int getX() {	return x; }
+	
+	/**
+	 * Returns y coordinate
+	 * 
+	 * @return y coordinate
+	 */
+	public int getY() { return y; }
+	
+	/**
+	 * Adds a position to this
+	 * 
+	 * @param position to be added
+	 */
+	public void add(Position position ) {
+		x = x + position.getX();
+		y = y + position.getY();
 	}
 	
 	/**
@@ -65,6 +107,6 @@ public class Position {
 	 */
 	@Override
 	public String toString() {
-		return "Currently at ["+x+","+y+"] looking "+getHeadingString();
+		return "Currently at ["+x+","+y+"] looking "+direction+"("+heading+")";
 	}
 }
