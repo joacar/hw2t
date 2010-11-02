@@ -179,8 +179,9 @@ public class GenerateWumpusWorld {
 					bw.write(s);
 					bw.write(" ");
 				}
-				bw.write("\n");
 			}
+			bw.flush();
+			bw.close();
 		} catch(IOException e) {
 			System.err.println("Error while writing string "+s
 					+" to file "+outputFile);
