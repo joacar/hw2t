@@ -39,13 +39,13 @@ public class KnowledgeBaseTest {
 	 * 
 	 * @param state State currently in
 	 */
-	public void setOk(Position position, HashMap<Position, StateTesting> world) {		
+	public void setOk(Position position, HashMap<Position, StateT> world) {		
 		System.out.println("KnowledgeBaseTest.setOk()");
 		System.out.println("Current position = "+position);
 		for(int[] pos : Agent.VALID_MOVES) {
 			Position newPosition = position.newPosition(pos[0], pos[1]);
 			System.out.println(newPosition);
-			StateTesting state = new StateTesting(newPosition, false);
+			StateT state = new StateT(newPosition, false);
 			
 			if(adjacent(position, newPosition) && newPosition != position) {
 				world.put(newPosition, state);
@@ -71,7 +71,7 @@ public class KnowledgeBaseTest {
 	public void setPitPossibility(Position position) {
 		for(int[] pos : Agent.VALID_MOVES) {
 			Position newPosition = position.newPosition(pos[0], pos[1]);
-			StateTesting state = new StateTesting(newPosition, false);
+			StateT state = new StateT(newPosition, false);
 			
 			if(!state.ok && adjacent(position, state.position)) {
 				state.pitP += 1;			// Increase the chance that there is a pit
@@ -96,7 +96,7 @@ public class KnowledgeBaseTest {
 	public void setWumpusPossibility(Position position) {
 		for(int[] pos : Agent.VALID_MOVES) {
 			Position newPosition = position.newPosition(pos[0], pos[1]);
-			StateTesting state = new StateTesting(newPosition, false);
+			StateT state = new StateT(newPosition, false);
 			
 			if(!state.ok && adjacent(position, state.position)) {
 				state.pitP += 1;		// Increase the chance that there is a pit
@@ -116,7 +116,7 @@ public class KnowledgeBaseTest {
 		
 		for(int[] pos : Agent.VALID_MOVES) {
 			Position newPosition = position.newPosition(pos[0], pos[1]);
-			StateTesting state = new StateTesting(newPosition, false);
+			StateT state = new StateT(newPosition, false);
 			
 			if(state.visited && adjacent(position, state.position) && state.pitP > 0) {
 				count += 1;
@@ -138,7 +138,7 @@ public class KnowledgeBaseTest {
 		
 		for(int[] pos : Agent.VALID_MOVES) {
 			Position newPosition = position.newPosition(pos[0], pos[1]);
-			StateTesting state = new StateTesting(newPosition, false);
+			StateT state = new StateT(newPosition, false);
 			
 			if(state.visited && adjacent(position, state.position) && state.wumpusP > 0) {
 				count += 1;

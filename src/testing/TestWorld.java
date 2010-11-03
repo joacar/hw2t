@@ -45,10 +45,14 @@ public class TestWorld {
 		return testWorld.get(position);
 	}
 	
-	public StateTesting getState(Position position) {
-		StateTesting state = new StateTesting(position, false);
+	public StateT getState(Position position) {
+		StateT state = new StateT(position, false);
 		state.setValue(getPercept(position));
 		return state;
+	}
+	
+	public HashMap<Position, Integer> getTestWorld() {
+		return testWorld;
 	}
 	
 	/**

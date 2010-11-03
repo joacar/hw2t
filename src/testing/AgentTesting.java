@@ -2,9 +2,8 @@ import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.LinkedList;
-import java.util.Map;
-import java.util.Set;
 /**
  * The AI for the classic and legendary game Wumpus world!
  * 
@@ -23,12 +22,17 @@ import java.util.Set;
  */
 public class AgentTesting {
 	private final boolean DEBUG = true;
-	private final EnumSet<StatusTesting> ALL = EnumSet.allOf(StatusTesting.class);
-	private final EnumSet<StatusTesting> MASK_B = EnumSet.of(StatusTesting.BREEZE);
-	private final EnumSet<StatusTesting> MASK_S = EnumSet.of(StatusTesting.STENCH);
-	private final EnumSet<StatusTesting> MASK_G = EnumSet.of(StatusTesting.GLITTER);
-	private final EnumSet<StatusTesting> MASK_N = EnumSet.of(StatusTesting.NOTHING);
 	
+	private final String STATUS_STRING[] = {
+			"DUMMY :D", "BORDER", "NOTHING", "BREEZE", "STENCH", "GLITTER", 
+			"STENCH_BREEZE", "GLITTER_BREEZE", "GLITTER_STENCH"
+			, "STENCH_GLITTER_BREEZE" };
+	
+	private final byte MASK_B[] = {0,0,1,0,0};
+	private final byte MASK_S[] = {0,0,0,1,0};
+	private final byte MASK_G[] = {0,0,0,0,1};
+	private final byte MASK_N[] = {1,0,0,0,0};
+	private final byte MASK_O[] = {0,1,0,0,0};
 
 	private TestWorld testWorld;
 
@@ -38,10 +42,11 @@ public class AgentTesting {
 	private HashSet<Position> adjacentToBase;
 	private HashSet<Position> unwantedStates;
 	
-	private Map<Position, Direction> dirLookUp;
-	private Map<Direction, int[]> posLookUp;
-
-	private HashMap<Position, StateTesting> wumpusWorld;
+	private Hashtable<Position, Direction> dirLookUp;
+	private Hashtable<Direction, int[]> posLookUp;
+	private Hashtable<Integer, EnumSet<StatusT>> statusLookUp;
+	private Hashtable<Position, StateT> wumpusWorld;
+	
 	private KnowledgeBaseTest kb;
 	private Position current, previous;
 
@@ -54,8 +59,7 @@ public class AgentTesting {
 		{1,1}, {1,0}, {1,-1}, {0,-1}, {-1,-1}, {-1,0}, {-1,1}, {0,1} 	
 	};
 	
-	private static final Set<StatusTesting> statusFlags = 
-		 EnumSet.range(StatusTesting.BREEZE, StatusTesting.GLITTER);
+	
 
 	/**
 	 * Entry point
@@ -84,15 +88,16 @@ public class AgentTesting {
 		kb = new KnowledgeBaseTest();
 
 		// Set up a tables
-		dirLookUp = new HashMap<Position, Direction>(10);
-		posLookUp = new EnumMap<Direction, int[]>(Direction.class);
-		setUpTables();	
+		dirLookUp = new Hashtable<Position, Direction>(10);
+		posLookUp = new Hashtable<Direction, int[]>(10);
+		setUpTables();
+
 
 		adjacentToBase = new HashSet<Position>(8);
 		unwantedStates = new HashSet<Position>();
 		visited = new HashSet<Position>();
 				
-		wumpusWorld = new HashMap<Position, StateTesting>();
+		wumpusWorld = new Hashtable<Position, StateT>();
 
 		Position current = new Position(0,0, Direction.FORWARD);
 		int cnt = 0;
@@ -106,66 +111,89 @@ public class AgentTesting {
 		} while(true);
 	}
 
-	private StateTesting percept(Position current) {
+	private StateT percept(Position current) {
 
-		// Start Perceive
-		Position newPosition = current.newPosition();
-		StateTesting state = testWorld.getState(newPosition);
-		state.setVisited();
-
-		wumpusWorld.put(newPosition, state);
-		visited.add(newPosition);
+		// Make the new position for this state
+		Position position = current.newPosition();
+		
+		// Get the value (percept)
+		int value = testWorld.getPercept(position);
+		StateT state = new StateT(position, true); 
+		state.setValue(value);
+		
+		// Find the corresponding status to that value
+		switch(value) {
+		case -1:
+			state.setStatus(MASK_O);
+		case 0:
+			state.setStatus(MASK_N);
+		case 1:
+			state.setStatus(MASK_B);
+		case 2:
+			state.setStatus(MASK_S);
+		case 3:
+			state.setStatus(MASK_G);
+		case 4:
+			state.setStatus(MASK_B);
+			state.or(MASK_S);
+		case 5:
+			state.setStatus(MASK_B);
+			state.or(MASK_G);
+		case 6:
+			state.setStatus(MASK_S);
+			state.or(MASK_G);
+		case 7:
+			state.setStatus(MASK_B);
+			state.or(MASK_S);
+			state.or(MASK_G);
+		}
+		
+		wumpusWorld.put(position, state);
+		visited.add(position);
 
 		return state;
 	}
 
-	private StatusTesting getStateStatus(StateTesting state) {
-		int status = state.getValue();
-		StatusTesting statusT = null;
-		for(StatusTesting st : StatusTesting.values())
-			if(status == st.getStatus()) statusT = st;
-
-		return statusT;
-	}
-
-	private void infer(StateTesting state, StatusTesting st, Position current) {
+	private void infer(StateT state, Position current) {
+		int value = state.getValue();
+		
 		// Start infer
-		switch(st) {
-		case BORDER:
+		switch(value) {
+		case -1:
 			// Set flag and go back (reverse)
-			state.border = true;
+			state.and(MASK_O);
 			//reverse(current);
 			break;
-		case NOTHING:
-			System.out.printf("Infer %s at %s\n",st,current.toString());
+		case 0:
+			System.out.printf("Infer %s at %s\n",STATUS_STRING[value+1],current.toString());
 			kb.setOk(current, wumpusWorld);
 			state.nothing = true;
 			state.setValue(st.getStatus());
 			break;
-		case BREEZE:
+		case 1:
 			state.status = EnumSet.of(st);
 			kb.setPitPossibility(current);
 			break;
-		case STENCH:
+		case 2:
 			kb.setWumpusPossibility(current);
 			break;
-		case GLITTER:
+		case 3:
 			kb.setOk(current, wumpusWorld);
 			state.glitter = true;
 			break;
-		case STENCH_BREEZE:
+		case 4:
 			kb.setWumpusPossibility(current);
 			kb.setPitPossibility(current);
 			break;
-		case GLITTER_BREEZE:
+		case 5:
 			kb.setPitPossibility(current);
 			state.glitter = true;
 			break;
-		case GLITTER_STENCH:
+		case 6:
 			kb.setWumpusPossibility(current);
 			state.glitter = true;
 			break;
-		case STENCH_GLITTER_BREEZE:
+		case 7:
 			kb.setWumpusPossibility(current);
 			kb.setPitPossibility(current);
 			state.glitter = true;
@@ -179,17 +207,16 @@ public class AgentTesting {
 			 */
 			fetchedTheGold();
 		}
+		
 	}
 
 	private Position decideMove(Position current) {
-		printWorld(current, true);
-		System.out.println("Base square : "+current);
+		//printWorld(current, true);
+		//System.out.println("Base square : "+current);
 
-		StateTesting state = percept(current);
-		StatusTesting st = getStateStatus(state);
-		infer(state, st, current);
+		StateT state = percept(current);
+		infer(state, current);
 
-		boolean deadEnd = true;
 		Position lastKnownSafePosition = null;
 		
 		
@@ -207,18 +234,15 @@ public class AgentTesting {
 			if(!visited.contains(newPos) && !unwantedStates.contains(newPos)) {
 				state = percept(newPos);
 				adjacentToBase.add(newPos);
-				st = getStateStatus(state);
 				
-				System.out.printf("  %d. %s status %s\n",count,newPos.toString(),st);
+				System.out.printf("  %d. %s status %s\n",count,newPos.toString(),getStateStatus(state));
 
-				infer(state, st, newPos);
+				infer(state, newPos);
 
-				deadEnd = false;
 			}
 		}
 		// We couldnt move from our new base. Go back to old base.
 		if(lastKnownSafePosition == null);
-		if(deadEnd) reverse(newPos);
 		return newPos;
 	}
 
@@ -280,10 +304,10 @@ public class AgentTesting {
 	 * @param position current
 	 * @return array of adjacent states
 	 */
-	public StateTesting[] getAdjacentStates(Position position, boolean ourWorld) {
+	public StateT[] getAdjacentStates(Position position, boolean ourWorld) {
 		final int[][] adjacentLocations = Agent.VALID_MOVES;
 		int length = adjacentLocations.length;
-		StateTesting[] adjacentStates = new StateTesting[length];
+		StateT[] adjacentStates = new StateT[length];
 		Position newPosition;
 		int i = 0;
 		for(int[] pos : adjacentLocations) {
@@ -323,19 +347,19 @@ public class AgentTesting {
 	 * @param position key to state
 	 * @return state in our world
 	 */
-	public StateTesting getState(Position position) {
+	public StateT getState(Position position) {
 		return wumpusWorld.get(position);
 	}
 	
 	private void printWorld(Position position, boolean world) {
-		StateTesting sta[] = getAdjacentStates(position, world);
+		StateT sta[] = getAdjacentStates(position, world);
 		if(world) {
 			System.out.println("The world wumpusWorld, ie our robots knowledge");
 		} else {
 			System.out.println("The test world from testWorld");
 		}
 		if(sta != null)
-			for(StateTesting s : sta) {
+			for(StateT s : sta) {
 				if(s != null) System.out.println(s.toString());
 			}
 	}
