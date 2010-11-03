@@ -1,5 +1,5 @@
+import java.util.BitSet;
 import java.util.EnumSet;
-import java.util.Set;
 
 /**
  * Class for representing every square that is 
@@ -19,24 +19,90 @@ import java.util.Set;
  * @author a0075840a and a0075885l
  *
  */
-public class StateTesting {
-	public EnumSet<StatusTesting> status = EnumSet.range(StatusTesting.BREEZE, 
-			StatusTesting.GLITTER);
+public class StateT {
+	//EnumSet<StatusT> status; //= EnumSet.of(StatusT.BORDER, StatusT.GLITTER);
+	private class Status {
+		private final boolean STATUS[] = new boolean[5];
+		private final int LENGTH = STATUS.length;
+		
+		Status() {}
+		
+		public void set(byte list[]) {
+			for(int i = 0; i < list.length; i++)
+				if(list[i] == 1) STATUS[i] = true;
+		}
+		
+		public void and(byte list[]) {
+			for(int i = 0; i < list.length; i++)
+				if(list[i] == 1 && STATUS[i]) {
+					STATUS[i] = true;
+				} else {
+					STATUS[i] = false;
+				}
+		}
+		
+		public void or(byte list[]) {
+			for(int i = 0; i < list.length; i++)
+				if(list[i] == 1 || STATUS[i]) {
+					STATUS[i] = true;
+				} else {
+					STATUS[i] = false;
+				}
+		}
+		
+		public boolean contains(byte list[]) { 
+			for(int i = 0; i < list.length; i++) {
+				if(!STATUS[i]) return false;
+			}
+			return true;
+		}
+	
+		public void setOk(byte list[]) {
+			for(int i = 2; i < LENGTH; i++) {
+				STATUS[i] = true;
+			}
+		}
+		
+		public boolean isOk() {
+			for(int i = 0; i < LENGTH; i++) {
+				if(i < 2 && STATUS[i]) {
+					return false;
+				} else {
+					if(!STATUS[i]) return false;
+				}
+			}
+			return true;
+		}
+	}
 	
 	boolean nothing, stench, glitter, breeze, border, visited, ok,
 		pit, wumpus;
-	final boolean states[] = {breeze, stench, glitter};
+	final boolean states[] = {nothing, border, breeze, stench, glitter};
 	int wumpusP = 0, pitP = 0, time, value;
-	
+	Status status;
 	Position position;
 	
 	/**
 	 * Constructor
 	 */
-	StateTesting(Position position, boolean visited) {
+	StateT(Position position, boolean visited) {
 		this.position = position;
 		this.visited = visited;
+		status = new Status();
 	}
+	
+	public void setStatus(byte flag[]) { status.set(flag); }
+	
+	public void or(byte flag[]) {status.or(flag); }
+	
+	public void and(byte flag[]) {status.and(flag); }
+	
+	public void setOk(byte flag[]) {status.setOk(flag); }
+	
+	public boolean isOk() { return status.isOk(); } 
+	
+	public boolean contains(byte flag[]) { return status.contains(flag); }
+	
 	
 	/**
 	 * The state is ok
@@ -79,8 +145,8 @@ public class StateTesting {
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("P["+position.getX()+","+position.getY()+"] status is ");
-		for(StatusTesting st : status) 
-			if(value == st.getStatus()) sb.append(st+"("+st.getStatus()+")");
+		//for(StatusT st : status) 
+		//	if(value == st.getStatus()) sb.append(st+"("+st.getStatus()+")");
 		
 		return sb.toString();
 	}
