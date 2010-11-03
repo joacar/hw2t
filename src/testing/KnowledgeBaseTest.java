@@ -7,11 +7,8 @@
  * @author joacar
  *
  */
-public class KnowledgeBase {	
-	Agent agent;
-	public KnowledgeBase(Agent agent) {
-		this.agent = agent;
-	}
+public class KnowledgeBaseTest {	
+	public KnowledgeBaseTest() {}
 	
 	/**
 	 * Checks if two squares are adjacent or not. 
@@ -40,11 +37,12 @@ public class KnowledgeBase {
 	 * 
 	 * @param state State currently in
 	 */
-	public void setOk(Position position) {
-		State[] adjacentStates = agent.getAdjacentStates(position);
-				
-		for(State s : adjacentStates) 
-			s.ok = true;
+	public void setOk(Position position) {		
+		for(int[] pos : Agent.VALID_MOVES) {
+			Position newPosition = position.newPosition(pos[0], pos[1]);
+			StateTesting state = new StateTesting(newPosition, false);
+			state.ok = true;
+		}
 	}
 
 	/**
@@ -62,14 +60,15 @@ public class KnowledgeBase {
 	 * @param position current
 	 */
 	public void setPitPossibility(Position position) {
-		State[] adjacentStates = agent.getAdjacentStates(position);
-
-		for(State s : adjacentStates) {
-			if(!s.ok && adjacent(position, s.position)) {
-				s.pitP += 1;			// Increase the chance that there is a pit
-				setPit(s.position);	// Is there a pit there?
+		for(int[] pos : Agent.VALID_MOVES) {
+			Position newPosition = position.newPosition(pos[0], pos[1]);
+			StateTesting state = new StateTesting(newPosition, false);
+			
+			if(!state.ok && adjacent(position, state.position)) {
+				state.pitP += 1;			// Increase the chance that there is a pit
+				//setPit(s.position);	// Is there a pit there?
 			}
-		}		
+		}
 	}
 
 	/**
@@ -86,14 +85,15 @@ public class KnowledgeBase {
 	 * @param position current
 	 */
 	public void setWumpusPossibility(Position position) {
-		State[] adjacentStates = agent.getAdjacentStates(position);
-
-		for(State s : adjacentStates) {
-			if(!s.ok && adjacent(position, s.position)) {
-				s.pitP += 1;		// Increase the chance that there is a pit
-				setWumpus(s.position);	// Is it the home of the Wumpus?
+		for(int[] pos : Agent.VALID_MOVES) {
+			Position newPosition = position.newPosition(pos[0], pos[1]);
+			StateTesting state = new StateTesting(newPosition, false);
+			
+			if(!state.ok && adjacent(position, state.position)) {
+				state.pitP += 1;		// Increase the chance that there is a pit
+				//setWumpus(s.position);	// Is it the home of the Wumpus?
 			}
-		}		
+		}
 	}
 	
 	/**
@@ -102,17 +102,19 @@ public class KnowledgeBase {
 	 * 
 	 * @param position current
 	 */
-	public void setPit(Position position) {
-		State[] adjacentStates = agent.getAdjacentStates(position);
-		int count = 0;	// Counts number of adjacent states
+	public boolean setPit(Position position) {
 		
-		for(State s : adjacentStates) { 
-			if(s.visited && adjacent(position, s.position) && s.pitP > 0) {
+		int count = 0;	// Counts number of adjacent states
+		for(int[] pos : Agent.VALID_MOVES) {
+			Position newPosition = position.newPosition(pos[0], pos[1]);
+			StateTesting state = new StateTesting(newPosition, false);
+			if(state.visited && adjacent(position, state.position) && state.pitP > 0) {
 				count += 1;
 			}	
 		}
-		State state = agent.getState(position);
-		if(count > 1) state.setPit(); 
+		
+		if(count > 1) return true;
+		return false;
 	}
 	
 	/**
@@ -121,16 +123,17 @@ public class KnowledgeBase {
 	 * 
 	 * @param position current
 	 */
-	public void setWumpus(Position position) {
-		State[] adjacentStates = agent.getAdjacentStates(position);
+	public boolean setWumpus(Position position) {
 		int count = 0;	// Counts number of adjacent states
 		
-		for(State s : adjacentStates) { 
-			if(s.visited && adjacent(position, s.position) && s.wumpusP > 0) {
+		for(int[] pos : Agent.VALID_MOVES) {
+			Position newPosition = position.newPosition(pos[0], pos[1]);
+			StateTesting state = new StateTesting(newPosition, false);
+			if(state.visited && adjacent(position, state.position) && state.wumpusP > 0) {
 				count += 1;
 			}	
 		}
-		State state = agent.getState(position);
-		if(count > 1) state.setWumpus(); 
+		if(count > 1) return true;
+		return false;
 	}
 }

@@ -44,6 +44,7 @@ public class Position {
 	Position(int x, int y, Direction heading) {
 		this.x = x; this.y = y;
 		setHeading(heading);
+		this.direction = heading;
 	}
 	
 	/**
@@ -76,7 +77,7 @@ public class Position {
 	 * 
 	 * @return heading as a float
 	 */
-	public float getHeadingFloat() { return heading; }
+	public float getHeadingInt() { return heading; }
 	
 	/**
 	 * Returns x coordinate
@@ -97,11 +98,51 @@ public class Position {
 	 * 
 	 * @param position to be added
 	 */
-	public void add(Position position ) {
-		x = x + position.getX();
-		y = y + position.getY();
+	public void change(int[] position ) {
+		x = x + position[0];
+		y = y + position[1];
+	}
+	public void reverseHeading() {
+		for(Direction st : Direction.values()) 
+			if(heading == -st.getHeading()) direction = st;
 	}
 	
+	public Position newPosition() { return new Position(this.x, this.y, direction);}
+	
+	public Position newPosition(int x, int y) { 
+		return new Position(this.x+x, this.y+y, direction); }
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + x;
+		result = prime * result + y;
+		return result;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Position other = (Position) obj;
+		if (x != other.x)
+			return false;
+		if (y != other.y)
+			return false;
+		return true;
+	}
+
 	/**
 	 * toString
 	 */
@@ -109,4 +150,5 @@ public class Position {
 	public String toString() {
 		return "Currently at ["+x+","+y+"] looking "+direction+"("+heading+")";
 	}
+	
 }

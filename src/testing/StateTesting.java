@@ -1,3 +1,6 @@
+import java.util.EnumSet;
+import java.util.Set;
+
 /**
  * Class for representing every square that is 
  * present in the game environment. Every square 
@@ -16,10 +19,9 @@
  * @author a0075840a and a0075885l
  *
  */
-public class State {
-	public enum Status {
-		BORDER, NOTHING, BREEZE, STENCH, GLITTER, STENCH_BREEZE,
-		GLITTER_BREEZE, GLITTER_STENCH, STENCH_GLITTER_BREEZE }
+public class StateTesting {
+	final Set<StatusTesting> status = EnumSet.range(StatusTesting.BORDER, 
+			StatusTesting.STENCH_GLITTER_BREEZE);
 	
 	boolean nothing, stench, glitter, breeze, border, visited, ok,
 		pit, wumpus;
@@ -31,7 +33,7 @@ public class State {
 	/**
 	 * Constructor
 	 */
-	State(Position position, boolean visited) {
+	StateTesting(Position position, boolean visited) {
 		this.position = position;
 		this.visited = visited;
 	}
@@ -76,28 +78,10 @@ public class State {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("Current state "+time+"is ");
-		for(int i = 8; i >= 1; i++) {
-			switch(i) {
-			case 1:
-				if(stench) sb.append("STENCH");
-			case 2:
-				if(glitter) sb.append("GLITTER");
-			case 3:
-				if(breeze) sb.append("BREEZE");
-			case 4:
-				if(stench && glitter) sb.append("STENCH + GLITTER");
-			case 5:
-				if(stench && breeze) sb.append("STENCH + BREEZE");
-			case 6:
-				if(breeze && glitter) sb.append("BREEZE + GLITTER");
-			case 7:
-				if(stench && glitter && breeze) sb.append("STENCH + BREEZE + GLITTER");
-			case 8:
-				if(nothing) sb.append("OK");
-				return sb.toString();
-			}
-		}
+		sb.append("P["+position.getX()+","+position.getY()+"] status is ");
+		for(StatusTesting st : status) 
+			if(value == st.getStatus()) sb.append(st+"("+st.getStatus()+")");
+		
 		return sb.toString();
 	}
 }

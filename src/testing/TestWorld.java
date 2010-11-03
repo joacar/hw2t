@@ -5,6 +5,7 @@ import java.util.Scanner;
 
 public class TestWorld {
 	private HashMap<Position,Integer> testWorld;
+	private final int[] START = new int[2];
 	
 	public static void main(String[] args){
 		TestWorld tw = new TestWorld(args[0]);
@@ -18,10 +19,16 @@ public class TestWorld {
 		Scanner s = null;
 		try {
 			s = new Scanner((new File(path)));
+			START[0] = s.nextInt(); START[1] = s.nextInt();
 			while(s.hasNext()){
-				Position pos = new Position(s.nextInt(),s.nextInt());
-				testWorld.put(pos, new Integer(s.nextInt()));
+				int y = s.nextInt();
+				int x = s.nextInt();
+				Position pos = new Position(y,x);
+				Integer i = new Integer(s.nextInt());
+				testWorld.put(pos, i);
+				//System.out.printf("[%d,%d] status %d\n",y,x,i);
 			}
+			//System.out.printf("============================\n");
 		} catch (FileNotFoundException e) {
 			System.err.println("File not found: " + path);
 			System.exit(1);
@@ -38,8 +45,8 @@ public class TestWorld {
 		return testWorld.get(position);
 	}
 	
-	public State getState(Position position) {
-		State state = new State(position, false);
+	public StateTesting getState(Position position) {
+		StateTesting state = new StateTesting(position, false);
 		state.setValue(getPercept(position));
 		return state;
 	}
@@ -52,5 +59,14 @@ public class TestWorld {
 	 */
 	public boolean stateExists(Position position) {
 		return testWorld.containsKey(position);
+	}
+	
+	/**
+	 * Returns start position
+	 * 
+	 * @return start position
+	 */
+	public int[] getStartPosition() {
+		return START;
 	}
 }

@@ -74,8 +74,10 @@ public class GenerateWumpusWorld {
 		}
 
 		read(sc);
-		printTransformed();
-		write();
+		//printTransformed();
+		//printAbsolute();
+		printRelative();
+		writeTransformed();
 		finished();
 	}
 
@@ -101,7 +103,7 @@ public class GenerateWumpusWorld {
 			// Read in the actual world
 			for(int i = 1; i < rows-1; i++)
 				for(int j = 1; j < cols-1; j++) 
-					wumpusWorldS[i][j] = sc.next();
+					wumpusWorldS[j][i] = sc.next();
 
 		} catch(NumberFormatException e) {
 			System.err.println("Incorrectly formated input data!"+
@@ -112,10 +114,24 @@ public class GenerateWumpusWorld {
 	/**
 	 * Help method to print the board
 	 */
-	private void print() {
+	private void printAbsolute() {
+		System.out.printf("Start is [%d,%d]\n",x,y);
 		for(int i = 0; i < rows; i++) {
 			for(int j = 0; j < cols; j++) { 
-				System.out.printf("%s ",wumpusWorldS[i][j]);
+				System.out.printf("%s[%d,%d] ",wumpusWorldS[j][i], j ,i);
+			}
+			System.out.printf("\n");
+		}
+	}
+	
+	/**
+	 * Help method to print the board
+	 */
+	private void printRelative() {
+		System.out.printf("Start is [%d,%d]\n",0,0);
+		for(int i = 0; i < rows; i++) {
+			for(int j = 0; j < cols; j++) { 
+				System.out.printf("%s[%d,%d] ",wumpusWorldS[j][i], (j-x) ,(i-y));
 			}
 			System.out.printf("\n");
 		}
@@ -125,11 +141,13 @@ public class GenerateWumpusWorld {
 	 * Help method to print the transformed board
 	 */
 	private void printTransformed() {
+		// Start location
+		System.out.printf("%d %d\n",x,y);
 		for(int i = 0; i < rows; i++) {
 			for(int j = 0; j < cols; j++) { 
-				System.out.printf("%d %d %d\n",(i-x),(j-y) ,table.get(wumpusWorldS[i][j]));
+				System.out.printf("%d %d %d\n",(j-x),(i-y) ,table.get(wumpusWorldS[j][i]));
 			}
-			System.out.printf("\n");
+			//System.out.printf("\n");
 		}
 	}
 	
@@ -175,9 +193,47 @@ public class GenerateWumpusWorld {
 		try {
 			for(int i = 0; i < rows; i++) {
 				for(int j = 0; j < cols; j++) {
-					s = wumpusWorldS[i][j];
-					bw.write(s);
-					bw.write(" ");
+					s = wumpusWorldS[j][i];
+					bw.write(s+" ");
+				}
+				bw.write("\n");
+			}
+			bw.flush();
+			bw.close();
+		} catch(IOException e) {
+			System.err.println("Error while writing string "+s
+					+" to file "+outputFile);
+		}
+	}
+	
+	/**
+	 * Writes the transformed file to outputFile
+	 */
+	private void writeTransformed() {
+		File file = null;
+		try {
+			file = new File(outputFile);
+		} catch(IOError e) {
+			System.err.println("Error occured while setting up file "
+					+outputFile);
+		}
+
+		try {
+			bw = new BufferedWriter(new FileWriter(file));
+		} catch(IOException e) {
+			System.err.println("Error while creating writer with file "
+					+outputFile);
+		}
+		
+		String s = null;
+		try {
+			// Write start location
+			bw.write(x+" "+y+"\n");
+			bw.flush();
+			for(int i = 0; i < rows; i++) {
+				for(int j = 0; j < cols; j++) {
+					s = (j-x)+" "+(i-y)+" "+table.get(wumpusWorldS[j][i]);
+					bw.write(s+"\n");
 				}
 			}
 			bw.flush();

@@ -25,7 +25,7 @@ import robot.Move;
  * @author a0075840a and a0075885l
  *
  */
-public class Agent implements Ai {
+public class Agent {
 	private final float TRAVEL_STRAIGHT = 27.9f;
 	private final float TRAVEL_PERP = 21.6f;
 	private final float TRAVEL_DIAG = 35.3f;
@@ -39,6 +39,8 @@ public class Agent implements Ai {
 	private LinkedList<Position> path;
 	private HashSet<Position> visited;
 	private HashSet<Position> dangerousStates;
+	
+	private KnowledgeBase kb;
 	
 	private HashMap<Position, Float> dirLookUp;
 	private boolean wumpusAlive = true, fetchedGold = false;
@@ -72,7 +74,7 @@ public class Agent implements Ai {
 		int squareValues[] = new CalibrateLightSensor(light).getLightValues();
 		// Set up wumpus world with the values obtained from calibrating
 		wumpusWorld = new WumpusWorld(squareValues);
-		
+		kb = new KnowledgeBase(this);
 		// Set up a directions table
 		dirLookUp = new HashMap<Position, Float>(8);
 		setUpDirLookUp();
@@ -300,93 +302,6 @@ public class Agent implements Ai {
 	}
 
 	/**
-	 * Checks if two squares are adjacent or not
-	 * 
-	 * @param s1 State s1
-	 * @param s2 State s2
-	 * @return true iff adjacent
-	 */
-	private boolean adjacent(State s1, State s2) { 
-		/*
-		 * A square [i,j] is adjacent to [x,y] if, (fA x,y,i,j) |x-i| or |y-j|
-		 * Formally: (fA i,j,x,y) Adjacent([i,j], [x,y]) <=> (|x-i| or |y-j|) 
-		 */
-		int x = s1.position.getX(), y = s1.position.getY(), 
-		i = s2.position.getX(), j = s2.position.getY();
-
-		if(x+1 == i && y == j ||  x-1 == i && y == j 
-				|| x == i && y+1 == j || x == i && y-1 == j) return true;
-
-		return false;
-	}
-
-	/**
-	 * If the state we are currently in is neither
-	 * breezy nor smelly (it is nothing), then we 
-	 * can conclude that the adjacent squares are 
-	 * free from the either wumpus or the pit or
-	 * both
-	 * 
-	 * @param state State currently in
-	 */
-	private void setOk(State state) {
-		State[] adjacentStates = wumpusWorld.getAdjacentStates(state);
-
-		for(State s : adjacentStates) {
-			s.pit = -1;
-			s.wumpus = -1;
-		}
-	}
-
-	/**
-	 * If the state we currently are in is breezy,
-	 * then we can conclude that any of its adjacent
-	 * squares can be a pit
-	 * 
-	 * @param state State currently in
-	 */
-	private void setPitPossibility(State state) {
-		/*
-		 * A square [x,y] is breezy if adjacent to a pit ( and [x,y] might
-		 * be a pit of some adjacent squares are breezy. )
-		 * Formally: (fA s) Breezy(s) (<=)=> (tE r) Adjacent(r,s) & Pit(r)
-		 */
-		State[] adjacentStates = wumpusWorld.getAdjacentStates(state);
-
-		for(State s : adjacentStates) {
-			// If square is not ok and they are adjacent (double check..), it might be a pit
-			if(!s.nothing && adjacent(state, s)) {
-				s.pit += 1;		// Increase the chance that there is a pit
-			}
-		}		
-	}
-
-	/** If the state we currently are in is smelly,
-	 * then we can conclude that any of its adjacent
-	 * squares can be the wumpus
-	 * 
-	 * @param state State currently in
-	 */
-	private void setWumpusPossibility(State state) {
-		/*
-		 * A square [x,y] is smelly if adjacent to the wumpus ( and [x,y] might
-		 * be the wumpus of some adjacent squares are smelly. )
-		 * Formally: (fA s) Breezy(s) (<=)=> (tE r) Adjacent(r,s) & Pit(r)
-		 */
-		State[] adjacentStates = wumpusWorld.getAdjacentStates(state);
-
-		for(State s : adjacentStates) {
-			/*
-			 *  If square is _not_ containing anything and are adjacent to a smelly
-			 *  square that square might be home of the horrible wumpus
-			 */
-			if(!s.nothing && adjacent(state, s)) {
-				s.wumpus += 1;		// Increase the chance that there is a wumpus in that square
-			}
-		}		
-	}
-
-	/**
 	 * Just a stupid welcome message
 	 * 
 	 * @throws InterruptedException
@@ -404,9 +319,7 @@ public class Agent implements Ai {
 		System.out.println("System updated and ready");
 	}
 
-	@Override
-	public void run() {
-		// TODO Auto-generated method stub
-		
+	public State getState(Position position) {
+		return wumpusWorld.getState(position);
 	}
 }

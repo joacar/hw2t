@@ -1,14 +1,6 @@
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
-
-import lejos.nxt.LightSensor;
-import lejos.nxt.Motor;
-import lejos.nxt.SensorPort;
-import lejos.nxt.Sound;
-import lejos.nxt.SoundSensor;
-import robot.CalibrateLightSensor;
-import robot.Move;
 /**
  * The AI for the classic and legendary game Wumpus world!
  * 
@@ -25,40 +17,33 @@ import robot.Move;
  * @author a0075840a and a0075885l
  *
  */
-public class AgentTesting implements Ai {
-	public enum StatusTesting {
-		BORDER(-1), NOTHING(0), BREEZE(1), STENCH(2), GLITTER(3), STENCH_BREEZE(4),
-		GLITTER_BREEZE(5), GLITTER_STENCH(6), STENCH_GLITTER_BREEZE(7);
-		
-		private final int status;
-		StatusTesting(int status) { this.status = status; } 
-		int getStatus() { return status; }
-	}
-	
+public class AgentTesting {
 	private final boolean DEBUG = true;
-	
+
 	private TestWorld testWorld;
-	
+
 	private LinkedList<Position> queue;
 	private LinkedList<Position> path;
 	private HashSet<Position> visited;
-	
+	private HashSet<Position> adjacentToBase;
+	private HashSet<Position> unwantedStates;
+
 	private HashMap<Position, Direction> dirLookUp;
-	private HashMap<Direction, Position> posLookUp;
-	
-	private HashMap<Position, State> wumpusWorld;
-	private KnowledgeBase kb;
+	private HashMap<Direction, int[]> posLookUp;
+
+	private HashMap<Position, StateTesting> wumpusWorld;
+	private KnowledgeBaseTest kb;
 	private Position current, previous;
-	
+
 	private boolean fetchedGold = false;
 
 	public static final int[][] VALID_MOVES = {
 		{-1,0}, {1,0},					// horizontal moves
 		{0,-1}, {0,1}, 					// vertical moves
 		{-1,-1}, {1,1}, {1,-1}, {-1,1},	// diagonal moves
-		
+
 	};
-	
+
 	/**
 	 * Entry point
 	 *  
@@ -69,10 +54,10 @@ public class AgentTesting implements Ai {
 			System.out.printf("Usage: \tjava AgentTesting <input_file>\n");
 			System.exit(0);	
 		}
-		
+
 		new AgentTesting(args[0]);
 	}
-	
+
 	/**
 	 * Constructor taking a input file
 	 * 
@@ -81,68 +66,70 @@ public class AgentTesting implements Ai {
 	private AgentTesting(String inputFile) {		
 		// Load the test world with the input fule
 		testWorld = new TestWorld(inputFile);
-		
+
 		// Load the knowledge base
-		kb = new KnowledgeBase(this);
-		
-		// Set up a directions table
-		dirLookUp = new HashMap<Position, Direction>(9);
-		posLookUp = new HashMap<Direction, Position>(9);
-		setUpTables();
-		
-		wumpusWorld = new HashMap<Position, State>();
-		
-		/*
-		 *  Start location is [0,0] heading NORTH
-		 *  
-		 *  The start location will always be [0,0] and we will 
-		 *  always move forward to [1,0] facing "north". 
-		 *  Actually we have no clue about positions or compass 
-		 *  directions, they are all relative to our starting 
-		 *  location. 
-		 */
-		Position start = new Position(0, 0, Direction.FORWARD);
-		State state = new State(start, true);
-		state.setNothing();
-		addState(state);
-		
-		Position next = move(start);
-		previous = current;
-		current = next;
-		
-		run();
-		
+		kb = new KnowledgeBaseTest();
+
+		// Set up a tables
+		dirLookUp = new HashMap<Position, Direction>(10);
+		posLookUp = new HashMap<Direction, int[]>(10);
+		setUpTables();	
+
+		adjacentToBase = new HashSet<Position>(8);
+		unwantedStates = new HashSet<Position>();
+		visited = new HashSet<Position>();
+
+		wumpusWorld = new HashMap<Position, StateTesting>();
+
+		/*int startPosition[] = testWorld.getStartPosition();
+		Position current = new Position(startPosition[0], startPosition[1], 
+				Direction.FORWARD);*/
+		Position current = new Position(0,0, Direction.FORWARD);
+		int cnt = 0;
+		Position t;
+		do {
+
+			System.out.printf("\ndecideMove called %d times\n\n",++cnt);
+			t = decideMove(current);
+			previous = current;
+			current = t;
+		} while(true);
 	}
-		
-	/**
-	 * Run
-	 */
-	public void run() {
-		
+
+	private StateTesting percept(Position current) {
+
 		// Start Perceive
-		State state = testWorld.getState(current);
+		Position newPosition = current.newPosition();
+		StateTesting state = testWorld.getState(newPosition);
 		state.setVisited();
-		addState(state);
-		
+
+		wumpusWorld.put(newPosition, state);
+		visited.add(newPosition);
+
+		return state;
+	}
+
+	private StatusTesting getStateStatus(StateTesting state) {
 		int status = state.getValue();
 		StatusTesting statusT = null;
 		for(StatusTesting st : StatusTesting.values())
 			if(status == st.getStatus()) statusT = st;
-		
-		// End perceive
-		
-		if(DEBUG) System.err.println(current.toString()+" and perceived "+statusT+"("+status+")");
-		
+
+		return statusT;
+	}
+
+	private void infer(StateTesting state, StatusTesting st, Position current) {
 		// Start infer
-		switch(statusT) {
+		switch(st) {
 		case BORDER:
 			// Set flag and go back (reverse)
 			state.border = true;
-			reverse();
-			current = previous;
+			//reverse(current);
 			break;
 		case NOTHING:
 			kb.setOk(current);
+			state.nothing = true;
+			state.setValue(st.getStatus());
 			break;
 		case BREEZE:
 			kb.setPitPossibility(current);
@@ -172,7 +159,7 @@ public class AgentTesting implements Ai {
 			state.glitter = true;
 			break;	
 		}
-		
+
 		if(state.glitter) {
 			/*
 			 * The gold is found and thereby our mission is done. 
@@ -180,55 +167,64 @@ public class AgentTesting implements Ai {
 			 */
 			fetchedTheGold();
 		}
-		
-		// Consult database (infer)
-		
 	}
-	
-	/**
-	 * Returns the next position depending on
-	 * the direction the agent is looking
-	 * 
-	 * @param position current
-	 * @return next position
-	 */
-	private Position move(Position position) {
-		int x = position.getX(), y = position.getY();
-		Direction heading = position.getHeading();
+
+	private Position decideMove(Position current) {
+		System.out.println("Base square : "+current);
+
+		StateTesting state = percept(current);
+		StatusTesting st = getStateStatus(state);
+		infer(state, st, current);
 		
-		switch(heading) {
-		case FORWARD:
-			return new Position(x+1, y, heading);
-		case LEFT:
-			return new Position(x, y+1, heading);
-		case RIGHT:
-			return new Position(x, y-1, heading);
-		case BACK:
-			return new Position(x-1, y, heading);
-		case BACK_LEFT:
-			return new Position(x-1, y+1, heading);
-		case BACK_RIGHT:
-			return new Position(x-1, y-1, heading);
-		case FORWARD_LEFT:
-			return new Position(x+1, y+1, heading);
-		case FORWARD_RIGHT:
-			return new Position(x+1, y-1, heading);
-		default:
-			return null; // Never gonna happen
+		boolean deadEnd = true;
+		int count = 0;
+		Position newPos = null;
+		System.out.printf("=== Adjacent to [%d,%d] ===\n", 
+				current.getX(),current.getY());
+		for(int[] pos : VALID_MOVES) {
+			++count;
+			newPos = current.newPosition(pos[0], pos[1]);
+			Direction dir = dirLookUp.get(newPos);
+			newPos.setHeading(dir);
+
+			System.out.printf("  %d. %s\n",count,newPos.toString());
+
+			if(!visited.contains(newPos) && !unwantedStates.contains(newPos)) {
+				state = percept(newPos);
+				adjacentToBase.add(newPos);
+				st = getStateStatus(state);
+				infer(state, st, newPos);
+				deadEnd = false;
+			}
 		}
+		if(deadEnd) reverse(newPos);
+		return newPos;
 	}
-	
+
+	/**
+	 * Moves to the direction we are currently looking
+	 */
+	private void move(Position current) {
+		if(current == null) System.out.println(true);
+		int[] move = posLookUp.get(current.getHeading());
+		current.change(move);
+	}
+
 	/**
 	 * Go back to our previous location facing the
 	 * same direction as when we entered the state
 	 */
-	private void reverse() {
-		Position undo = posLookUp.get(Direction.BACK);
-		
-		current.add(undo); 
+	private void reverse(Position current) {
+		int[] undo = new int[2];
+		for(Direction dir : Direction.values())
+			if(dir.getHeading() == -current.getHeadingInt())
+				undo = posLookUp.get(dir);
+
+		System.out.printf("\tReverse [%d,%d]",current.getX(), current.getY());
+		current.change(undo);
+		System.out.printf(" back to [%d,%d]\n", current.getX(), current.getY());
 	}
-	
-	
+
 	/**
 	 * Index the relative positions to their corresponding
 	 * direction as a float value. Instead of calculating
@@ -241,41 +237,43 @@ public class AgentTesting implements Ai {
 		 * Must be sorted the same way as Direction enum
 		 */
 		int[][] validMoves = {
-			{1,1}, {1,0}, {1,-1}, {0,-1}, {-1,-1}, {-1,0}, {-1,1}, {0,1} 
+				{1,1}, {1,0}, {1,-1}, {0,-1}, {-1,-1}, {-1,0}, {-1,1}, {0,1} 
 		};
-		
+
 		int i = 0;
 		for(Direction dir : Direction.values()) {
 			i = dir.ordinal();
 			int x = validMoves[i][0];
 			int y = validMoves[i][1];
+			int[] pos = {x,y};
 			Position position = new Position(x,y);
-			
+
 			dirLookUp.put(position, dir);
-			posLookUp.put(dir, position);
+			posLookUp.put(dir, pos);
 		}
 	}
-	
+
 	/**
 	 * Returns the adjacent states to the position specified
 	 * 
 	 * @param position current
 	 * @return array of adjacent states
 	 */
-	public State[] getAdjacentStates(Position position) {
+	public StateTesting[] getAdjacentStates(Position position) {
 		final int[][] adjacentLocations = Agent.VALID_MOVES;
 		int length = adjacentLocations.length;
-		State[] adjacentStates = new State[length];
+		StateTesting[] adjacentStates = new StateTesting[length];
 		Position newPosition;
-		
-		for(int i = 0; i < length; i++) {
-			int x = position.getX() + adjacentLocations[i][0];
-			int y = position.getY() + adjacentLocations[i][1];
+		int i = 0;
+		for(int[] pos : adjacentLocations) {
+			int x = position.getX() + pos[0];
+			int y = position.getY() + pos[1];
 			newPosition = new Position(x, y);
-			if(testWorld.stateExists(newPosition))
-				adjacentStates[i] = testWorld.getState(newPosition);
+			//if(testWorld.stateExists(newPosition))
+			adjacentStates[i] = testWorld.getState(newPosition);
+			i += 1;
 		}
-		
+
 		return adjacentStates; 
 	}
 
@@ -289,13 +287,13 @@ public class AgentTesting implements Ai {
 		fetchedGold = true;
 	}
 
-	
-	private void addState(State state) {
-		wumpusWorld.put(state.position, state);
-		visited.add(state.position);
-	}
-	
-	public State getState(Position position) {
+	/**
+	 * Return the state corresponding to the position
+	 * 
+	 * @param position key to state
+	 * @return state in our world
+	 */
+	public StateTesting getState(Position position) {
 		return wumpusWorld.get(position);
 	}
 }

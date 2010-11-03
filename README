@@ -11,3 +11,79 @@ This is just to ensure that the agent is thinking rationally and not ends up dea
 The mission is the collect the gold and return to the starting location with the gold. But during the riscy mission we have to look out for the Wumpus trying to kill us. Luckily he smells terrible so we can feel the smell surrounding his position. We also dont want to fall into the pits. But, also very luckily, they give away a light breeze so that we can tell when getting close to a pit and should be extra careful about our next move.
 
 The agent percieves it surrounding, one move at a time and after each percept logically infers about our next move and consequently updates its knowledge about the world. It uses a database with a set of rules, like the ones explained above, all adjacent squares to a pit are breezy etc.
+
+=== USAGE ===
+For simulating the problem on the computer instead of using the robot the move around in the physical world, just create a map.txt file to set up the world you want to test the robot in. 
+The map.txt file should be formatted starting with two ints r and c, the number of rows and columns respectively, followed by x and y, that is the start location beginning with the x corrdinate and then y. Next follows r rows with c columns, each column containg a String that represents a certain square status. X is out of range, 0 is nothing, B is breeze, S is stench and g is glitter.
+	
+	// Conversion table	
+	table.put("X", -1);
+	table.put("0", 0);
+	table.put("B", 1);
+	table.put("S", 2);
+	table.put("G", 3);
+	table.put("BS", 4);
+	table.put("BG", 5);
+	table.put("SG", 6);
+	table.put("BSG", 7);
+ 
+The orientation of the created input data is as follows, using [x,y] coordinates
+[0,0] [1,0] ... [c-1,0]
+[0,1] [1,1] ... [c-1,1]
+.	.     .	
+.	.        .
+[0,r-1] [1,r-1] ... [c-1,r-1]
+
+The GenerateWumpusWorld takes a file formatted according to the above rules and outputs a map relative to our start location. The file starts with the starting location and then (r+2)*(c+2) rows because a out of range BORDER is added to the world and contains of three integers, x y and v. They represent the location of a square with value v. This data is used to build a test world that follows the rules gives
+
+--- Example input
+4 4
+0 1
+0 0 S 0
+0 S 0 S
+0 B S 0
+B 0 B G
+
+--- Example output
+1 2
+-1 -2 -1
+0 -2 -1
+1 -2 -1
+2 -2 -1
+3 -2 -1
+4 -2 -1
+-1 -1 -1
+0 -1 0
+1 -1 0
+2 -1 2
+3 -1 0
+4 -1 -1
+-1 0 -1
+0 0 0
+1 0 2
+2 0 0
+3 0 2
+4 0 -1
+-1 1 -1
+0 1 0
+1 1 1
+2 1 2
+3 1 0
+4 1 -1
+-1 2 -1
+0 2 1
+1 2 0
+2 2 1
+3 2 3
+4 2 -1
+-1 3 -1
+0 3 -1
+1 3 -1
+2 3 -1
+3 3 -1
+4 3 -1 
+
+Finally, follow these steps once the input data is created
+">java GenerateWumpusWorld map.txt"
+">java AgentTesting map_converted.txt"
+
