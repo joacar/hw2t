@@ -20,64 +20,30 @@ import java.util.EnumSet;
  *
  */
 public class StateT {
-	//EnumSet<StatusT> status; //= EnumSet.of(StatusT.BORDER, StatusT.GLITTER);
+	
 	private class Status {
-		private final boolean STATUS[] = new boolean[5];
-		private final int LENGTH = STATUS.length;
+		private int status = 16;
 		
 		Status() {}
 		
-		public void set(byte list[]) {
-			for(int i = 0; i < list.length; i++)
-				if(list[i] == 1) STATUS[i] = true;
-		}
+		public int status() { return status; }
 		
-		public void and(byte list[]) {
-			for(int i = 0; i < list.length; i++)
-				if(list[i] == 1 && STATUS[i]) {
-					STATUS[i] = true;
-				} else {
-					STATUS[i] = false;
-				}
-		}
+		public void and(byte flag) { status = status & flag; }
 		
-		public void or(byte list[]) {
-			for(int i = 0; i < list.length; i++)
-				if(list[i] == 1 || STATUS[i]) {
-					STATUS[i] = true;
-				} else {
-					STATUS[i] = false;
-				}
-		}
+		public void or(byte flag) { status = status | flag;	}
 		
-		public boolean contains(byte list[]) { 
-			for(int i = 0; i < list.length; i++) {
-				if(!STATUS[i]) return false;
-			}
-			return true;
-		}
+		public boolean contains(byte flag) { return ((status | flag) > 0) ? true : false;}
 	
-		public void setOk(byte list[]) {
-			for(int i = 2; i < LENGTH; i++) {
-				STATUS[i] = true;
-			}
-		}
+		public void setOk() { status = 16; }
 		
-		public boolean isOk() {
-			for(int i = 0; i < LENGTH; i++) {
-				if(i < 2 && STATUS[i]) {
-					return false;
-				} else {
-					if(!STATUS[i]) return false;
-				}
-			}
-			return true;
-		}
+		public boolean isOk() { return ((status & 4) > 0) ? true : false; }
+		
+		public boolean isGold() { return ((status & 8) == 1) ? true : false; }
 	}
 	
-	boolean nothing, stench, glitter, breeze, border, visited, ok,
+	boolean border, stench, glitter, breeze, visited, ok,
 		pit, wumpus;
-	final boolean states[] = {nothing, border, breeze, stench, glitter};
+	private boolean states[] = {border, breeze, stench, glitter, ok};
 	int wumpusP = 0, pitP = 0, time, value;
 	Status status;
 	Position position;
@@ -91,28 +57,25 @@ public class StateT {
 		status = new Status();
 	}
 	
-	public void setStatus(byte flag[]) { status.set(flag); }
+	public void setStates(boolean list[]) { states = list; }
 	
-	public void or(byte flag[]) {status.or(flag); }
+	public boolean[] getStates() { return states; }
 	
-	public void and(byte flag[]) {status.and(flag); }
+	public void setOk() {states[4] = true; }
 	
-	public void setOk(byte flag[]) {status.setOk(flag); }
+	public boolean isOk() { return states[4]; } 
 	
-	public boolean isOk() { return status.isOk(); } 
+	public boolean isGold() { return states[3]; }
 	
-	public boolean contains(byte flag[]) { return status.contains(flag); }
+	/** ===== SHIT ======= **/
+	public boolean contains(byte flag) { return status.contains(flag); }
 	
+	public int getStatus() { return status.status; }
 	
-	/**
-	 * The state is ok
-	 */
-	public void setNothing() { nothing = ok = visited = true; }
+	public void or(byte flag) {status.or(flag); }
 	
-	/**
-	 * The state is a pit
-	 */
-	public void setPit() { pit = true; nothing = ok = visited = wumpus = false; }
+	public void and(byte flag) {status.and(flag); }
+	
 	
 	/**
 	 * Set the status value
@@ -129,7 +92,12 @@ public class StateT {
 	/**
 	 * The state is the wumpus home
 	 */
-	public void setWumpus() { wumpus = true; nothing = ok = visited = pit = false; }
+	public void setWumpus() { wumpus = true; ok = visited = pit = false; }
+	
+	/**
+	 * The state is a pit
+	 */
+	public void setPit() { pit = true; ok = visited = wumpus = false; }
 	
 	/**
 	 * State is visited
