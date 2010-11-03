@@ -1,9 +1,8 @@
-import java.util.EnumMap;
-import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
-import java.util.LinkedList;
+import java.util.Queue;
+
+import robot.Status;
 /**
  * The AI for the classic and legendary game Wumpus world!
  * 
@@ -23,10 +22,7 @@ import java.util.LinkedList;
 public class AgentTesting {
 	public static final boolean DEBUG = true;
 	
-	private final String STATUS_STRING[] = {
-			"DUMMY :D", "BORDER", "NOTHING", "BREEZE", "STENCH", "GLITTER", 
-			"STENCH_BREEZE", "GLITTER_BREEZE", "GLITTER_STENCH"
-			, "STENCH_GLITTER_BREEZE" };
+	private final String STATUS_STRING[] = Status.STRINGS;
 	
 	public static final byte MASK_B[] = {0,0,1,0,0};
 	public static final byte MASK_S[] = {0,0,0,1,0};
@@ -36,16 +32,16 @@ public class AgentTesting {
 
 	private TestWorld testWorld;
 
-	private LinkedList<Position> queue;
-	private LinkedList<Position> path;
-	private HashSet<Position> visited;
-	private HashSet<Position> adjacentToBase;
-	private HashSet<Position> unwantedStates;
+	private Queue<Position> queue;
+	private Queue<Position> path;
+	private Hashtable visited;
+	private Hashtable adjacentToBase;
+	private Hashtable unwantedStates;
 	
-	private Hashtable<Position, Direction> dirLookUp;
-	private Hashtable<Direction, int[]> posLookUp;
-	private Hashtable<Integer, EnumSet<StatusT>> statusLookUp;
-	private Hashtable<Position, StateT> wumpusWorld;
+	private Hashtable dirLookUp;
+	private Hashtable posLookUp;
+	private Hashtable statusLookUp;
+	private Hashtable wumpusWorld;
 	
 	private KnowledgeBaseTest kb;
 	private Position current, previous;
@@ -91,18 +87,17 @@ public class AgentTesting {
 		setUpTables();
 
 
-		adjacentToBase = new HashSet<Position>(8);
-		unwantedStates = new HashSet<Position>();
-		visited = new HashSet<Position>();
+		adjacentToBase = new Hashtable();
+		unwantedStates = new Hashtable();
+		visited = new Hashtable();
 				
-		wumpusWorld = new Hashtable<Position, StateT>();
+		wumpusWorld = new Hashtable();
 
 		Position current = new Position(0,0, Direction.FORWARD);
 		int cnt = 0;
 		Position t;
 		do {
-
-			System.out.printf("\ndecideMove called %d times\n\n",++cnt);
+			System.out.println("\ndecideMove called " + (++cnt) + " times\n\n");
 			t = decideMove(current);
 			previous = current;
 			current = t;
@@ -117,7 +112,6 @@ public class AgentTesting {
 	}
 
 	private StateT percept(Position current) {
-
 		// Make the new position for this state
 		Position position = current.newPosition();
 		
@@ -224,7 +218,6 @@ public class AgentTesting {
 
 		Position lastKnownSafePosition = null;
 		
-		
 		int count = 0;
 		Position newPos = null;
 		System.out.printf("=== Adjacent to [%d,%d] ===\n", 
@@ -234,7 +227,6 @@ public class AgentTesting {
 			newPos = current.newPosition(pos[0], pos[1]);
 			Direction dir = dirLookUp.get(newPos);
 			newPos.setHeading(dir);
-
 
 			if(!visited.contains(newPos) && !unwantedStates.contains(newPos)) {
 				state = percept(newPos);
