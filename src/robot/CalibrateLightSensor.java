@@ -1,4 +1,7 @@
 package robot;
+import java.util.EnumMap;
+import java.util.Map;
+
 import lejos.nxt.Button;
 import lejos.nxt.LightSensor;
 
@@ -11,7 +14,7 @@ import lejos.nxt.LightSensor;
  *
  */
 public class CalibrateLightSensor {
-	private enum Status {
+	public enum Status {
 		NOTHING, BORDER, BREEZE, STENCH, GLITTER, STENCH_BREEZE,
 		GLITTER_STENCH, GLITTER_BREEZE, STENCH_GLITTER_BREEZE }
 	private final int NUMBER_OF_SHADES = Status.values().length;

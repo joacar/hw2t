@@ -20,7 +20,7 @@ import java.util.Set;
  *
  */
 public class StateTesting {
-	public final EnumSet<StatusTesting> status = EnumSet.range(StatusTesting.BREEZE, 
+	public EnumSet<StatusTesting> status = EnumSet.range(StatusTesting.BREEZE, 
 			StatusTesting.GLITTER);
 	
 	boolean nothing, stench, glitter, breeze, border, visited, ok,

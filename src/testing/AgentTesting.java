@@ -1,7 +1,9 @@
+import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Set;
 /**
  * The AI for the classic and legendary game Wumpus world!
@@ -21,6 +23,12 @@ import java.util.Set;
  */
 public class AgentTesting {
 	private final boolean DEBUG = true;
+	private final EnumSet<StatusTesting> ALL = EnumSet.allOf(StatusTesting.class);
+	private final EnumSet<StatusTesting> MASK_B = EnumSet.of(StatusTesting.BREEZE);
+	private final EnumSet<StatusTesting> MASK_S = EnumSet.of(StatusTesting.STENCH);
+	private final EnumSet<StatusTesting> MASK_G = EnumSet.of(StatusTesting.GLITTER);
+	private final EnumSet<StatusTesting> MASK_N = EnumSet.of(StatusTesting.NOTHING);
+	
 
 	private TestWorld testWorld;
 
@@ -29,9 +37,9 @@ public class AgentTesting {
 	private HashSet<Position> visited;
 	private HashSet<Position> adjacentToBase;
 	private HashSet<Position> unwantedStates;
-
-	private HashMap<Position, Direction> dirLookUp;
-	private HashMap<Direction, int[]> posLookUp;
+	
+	private Map<Position, Direction> dirLookUp;
+	private Map<Direction, int[]> posLookUp;
 
 	private HashMap<Position, StateTesting> wumpusWorld;
 	private KnowledgeBaseTest kb;
@@ -40,10 +48,11 @@ public class AgentTesting {
 	private boolean fetchedGold = false;
 
 	public static final int[][] VALID_MOVES = {
-		{-1,0}, {1,0},					// horizontal moves
-		{0,-1}, {0,1}, 					// vertical moves
-		{-1,-1}, {1,1}, {1,-1}, {-1,1},	// diagonal moves 
-		};
+		//{-1,0}, {1,0},					// horizontal moves
+		//{0,-1}, {0,1}, 					// vertical moves
+		//{-1,-1}, {1,1}, {1,-1}, {-1,1},	// diagonal moves 
+		{1,1}, {1,0}, {1,-1}, {0,-1}, {-1,-1}, {-1,0}, {-1,1}, {0,1} 	
+	};
 	
 	private static final Set<StatusTesting> statusFlags = 
 		 EnumSet.range(StatusTesting.BREEZE, StatusTesting.GLITTER);
@@ -76,7 +85,7 @@ public class AgentTesting {
 
 		// Set up a tables
 		dirLookUp = new HashMap<Position, Direction>(10);
-		posLookUp = new HashMap<Direction, int[]>(10);
+		posLookUp = new EnumMap<Direction, int[]>(Direction.class);
 		setUpTables();	
 
 		adjacentToBase = new HashSet<Position>(8);
@@ -85,9 +94,6 @@ public class AgentTesting {
 				
 		wumpusWorld = new HashMap<Position, StateTesting>();
 
-		/*int startPosition[] = testWorld.getStartPosition();
-		Position current = new Position(startPosition[0], startPosition[1], 
-				Direction.FORWARD);*/
 		Position current = new Position(0,0, Direction.FORWARD);
 		int cnt = 0;
 		Position t;
@@ -137,7 +143,7 @@ public class AgentTesting {
 			state.setValue(st.getStatus());
 			break;
 		case BREEZE:
-			state.status.of(st);
+			state.status = EnumSet.of(st);
 			kb.setPitPossibility(current);
 			break;
 		case STENCH:
@@ -254,7 +260,7 @@ public class AgentTesting {
 		int[][] validMoves = {
 				{1,1}, {1,0}, {1,-1}, {0,-1}, {-1,-1}, {-1,0}, {-1,1}, {0,1} 
 		};
-
+		
 		int i = 0;
 		for(Direction dir : Direction.values()) {
 			i = dir.ordinal();
@@ -262,7 +268,7 @@ public class AgentTesting {
 			int y = validMoves[i][1];
 			int[] pos = {x,y};
 			Position position = new Position(x,y);
-
+			
 			dirLookUp.put(position, dir);
 			posLookUp.put(dir, pos);
 		}

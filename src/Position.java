@@ -109,8 +109,7 @@ public class Position {
 	
 	public Position newPosition() { return new Position(this.x, this.y, direction);}
 	
-	public Position newPosition(int x, int y) { 
-		return new Position(this.x+x, this.y+y, direction); }
+	public Position newPosition(int x, int y) { return new Position(this.x+x, this.y+y, direction); }
 
 	/* (non-Javadoc)
 	 * @see java.lang.Object#hashCode()
@@ -148,7 +147,7 @@ public class Position {
 	 */
 	@Override
 	public String toString() {
-		return "Currently at ["+x+","+y+"] looking "+direction+"("+heading+")";
+		return "P["+x+","+y+"] "+direction+"("+heading+")";
 	}
 	
 }
