@@ -1,3 +1,5 @@
+import java.util.HashMap;
+
 /**
  * Contains the information we are able to 
  * infer from the given rules and logical
@@ -37,11 +39,18 @@ public class KnowledgeBaseTest {
 	 * 
 	 * @param state State currently in
 	 */
-	public void setOk(Position position) {		
+	public void setOk(Position position, HashMap<Position, StateTesting> world) {		
+		System.out.println("KnowledgeBaseTest.setOk()");
+		System.out.println("Current position = "+position);
 		for(int[] pos : Agent.VALID_MOVES) {
 			Position newPosition = position.newPosition(pos[0], pos[1]);
+			System.out.println(newPosition);
 			StateTesting state = new StateTesting(newPosition, false);
-			state.ok = true;
+			
+			if(adjacent(position, newPosition) && newPosition != position) {
+				world.put(newPosition, state);
+				state.ok = true;
+			}
 		}
 	}
 
@@ -103,11 +112,12 @@ public class KnowledgeBaseTest {
 	 * @param position current
 	 */
 	public boolean setPit(Position position) {
-		
 		int count = 0;	// Counts number of adjacent states
+		
 		for(int[] pos : Agent.VALID_MOVES) {
 			Position newPosition = position.newPosition(pos[0], pos[1]);
 			StateTesting state = new StateTesting(newPosition, false);
+			
 			if(state.visited && adjacent(position, state.position) && state.pitP > 0) {
 				count += 1;
 			}	
@@ -129,10 +139,12 @@ public class KnowledgeBaseTest {
 		for(int[] pos : Agent.VALID_MOVES) {
 			Position newPosition = position.newPosition(pos[0], pos[1]);
 			StateTesting state = new StateTesting(newPosition, false);
+			
 			if(state.visited && adjacent(position, state.position) && state.wumpusP > 0) {
 				count += 1;
 			}	
 		}
+		
 		if(count > 1) return true;
 		return false;
 	}

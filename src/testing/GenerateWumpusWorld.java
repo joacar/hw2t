@@ -19,7 +19,12 @@ import java.util.Scanner;
  * It then proccess it so that the file is in a way
  * that is useful for us in testing it in wumpus world.
  * It changes so that the coordinates are all relative
- * to the start location.
+ * to the start location and prints out a transformed
+ * file as:
+ * x y - start location
+ * x y v - location of a square with value v
+ * 
+ * It contains, after in total 1+(r+2)*(c+2) lines
  * 
  * @author joacar
  *
@@ -165,9 +170,6 @@ public class GenerateWumpusWorld {
 		table.put("BG", 5);
 		table.put("SG", 6);
 		table.put("BSG", 7);
-		table.put("P", 10);
-		table.put("W", 11);
-		table.put("R", 12);
 	}
 	
 	/**

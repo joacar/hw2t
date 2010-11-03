@@ -1,6 +1,8 @@
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Set;
 /**
  * The AI for the classic and legendary game Wumpus world!
  * 
@@ -40,9 +42,11 @@ public class AgentTesting {
 	public static final int[][] VALID_MOVES = {
 		{-1,0}, {1,0},					// horizontal moves
 		{0,-1}, {0,1}, 					// vertical moves
-		{-1,-1}, {1,1}, {1,-1}, {-1,1},	// diagonal moves
-
-	};
+		{-1,-1}, {1,1}, {1,-1}, {-1,1},	// diagonal moves 
+		};
+	
+	private static final Set<StatusTesting> statusFlags = 
+		 EnumSet.range(StatusTesting.BREEZE, StatusTesting.GLITTER);
 
 	/**
 	 * Entry point
@@ -78,7 +82,7 @@ public class AgentTesting {
 		adjacentToBase = new HashSet<Position>(8);
 		unwantedStates = new HashSet<Position>();
 		visited = new HashSet<Position>();
-
+				
 		wumpusWorld = new HashMap<Position, StateTesting>();
 
 		/*int startPosition[] = testWorld.getStartPosition();
@@ -127,18 +131,20 @@ public class AgentTesting {
 			//reverse(current);
 			break;
 		case NOTHING:
-			kb.setOk(current);
+			System.out.printf("Infer %s at %s\n",st,current.toString());
+			kb.setOk(current, wumpusWorld);
 			state.nothing = true;
 			state.setValue(st.getStatus());
 			break;
 		case BREEZE:
+			state.status.of(st);
 			kb.setPitPossibility(current);
 			break;
 		case STENCH:
 			kb.setWumpusPossibility(current);
 			break;
 		case GLITTER:
-			kb.setOk(current);
+			kb.setOk(current, wumpusWorld);
 			state.glitter = true;
 			break;
 		case STENCH_BREEZE:
@@ -170,13 +176,17 @@ public class AgentTesting {
 	}
 
 	private Position decideMove(Position current) {
+		printWorld(current, true);
 		System.out.println("Base square : "+current);
 
 		StateTesting state = percept(current);
 		StatusTesting st = getStateStatus(state);
 		infer(state, st, current);
-		
+
 		boolean deadEnd = true;
+		Position lastKnownSafePosition = null;
+		
+		
 		int count = 0;
 		Position newPos = null;
 		System.out.printf("=== Adjacent to [%d,%d] ===\n", 
@@ -187,16 +197,21 @@ public class AgentTesting {
 			Direction dir = dirLookUp.get(newPos);
 			newPos.setHeading(dir);
 
-			System.out.printf("  %d. %s\n",count,newPos.toString());
 
 			if(!visited.contains(newPos) && !unwantedStates.contains(newPos)) {
 				state = percept(newPos);
 				adjacentToBase.add(newPos);
 				st = getStateStatus(state);
+				
+				System.out.printf("  %d. %s status %s\n",count,newPos.toString(),st);
+
 				infer(state, st, newPos);
+
 				deadEnd = false;
 			}
 		}
+		// We couldnt move from our new base. Go back to old base.
+		if(lastKnownSafePosition == null);
 		if(deadEnd) reverse(newPos);
 		return newPos;
 	}
@@ -259,7 +274,7 @@ public class AgentTesting {
 	 * @param position current
 	 * @return array of adjacent states
 	 */
-	public StateTesting[] getAdjacentStates(Position position) {
+	public StateTesting[] getAdjacentStates(Position position, boolean ourWorld) {
 		final int[][] adjacentLocations = Agent.VALID_MOVES;
 		int length = adjacentLocations.length;
 		StateTesting[] adjacentStates = new StateTesting[length];
@@ -269,8 +284,17 @@ public class AgentTesting {
 			int x = position.getX() + pos[0];
 			int y = position.getY() + pos[1];
 			newPosition = new Position(x, y);
-			//if(testWorld.stateExists(newPosition))
-			adjacentStates[i] = testWorld.getState(newPosition);
+			if(ourWorld) {
+				if(wumpusWorld.containsKey(newPosition))
+					adjacentStates[i] = wumpusWorld.get(newPosition);
+			} else {
+				if(testWorld.stateExists(newPosition)) {// Should never fail.
+					adjacentStates[i] = testWorld.getState(newPosition);
+				} else {
+					System.err.println("=== FAIL AT getAdjcentStates when"
+							+" ourWorld = "+ourWorld);
+				}
+			}
 			i += 1;
 		}
 
@@ -295,5 +319,18 @@ public class AgentTesting {
 	 */
 	public StateTesting getState(Position position) {
 		return wumpusWorld.get(position);
+	}
+	
+	private void printWorld(Position position, boolean world) {
+		StateTesting sta[] = getAdjacentStates(position, world);
+		if(world) {
+			System.out.println("The world wumpusWorld, ie our robots knowledge");
+		} else {
+			System.out.println("The test world from testWorld");
+		}
+		if(sta != null)
+			for(StateTesting s : sta) {
+				if(s != null) System.out.println(s.toString());
+			}
 	}
 }
