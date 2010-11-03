@@ -22,6 +22,7 @@ import robot.Status;
 public class AgentTesting {
 	public static final boolean DEBUG = true;
 	
+<<<<<<< HEAD
 	private final String STATUS_STRING[] = Status.STRINGS;
 	
 	public static final byte MASK_B[] = {0,0,1,0,0};
@@ -42,6 +43,33 @@ public class AgentTesting {
 	private Hashtable posLookUp;
 	private Hashtable statusLookUp;
 	private Hashtable wumpusWorld;
+=======
+	private final String STATUS_STRING[] = {
+			"DUMMY :D", "BORDER", "NOTHING", "BREEZE", "STENCH", "GLITTER", 
+			"STENCH_BREEZE", "GLITTER_BREEZE", "GLITTER_STENCH"
+			, "STENCH_GLITTER_BREEZE" };
+	// boolean states[] = {border, breeze, stench, glitter, ok};
+	public static final boolean MASK_N[] = {false, false, false, false, true};
+	public static final boolean MASK_O[] = {true, false, false, false, false};	
+	public static final boolean MASK_B[] = {false, true, false, false, true};
+	public static final boolean MASK_S[] = {false, false, true, false, true};
+	public static final boolean MASK_G[] = {false, false, false, true, true};
+	public static final boolean MASK_BS[] = {false, true, true, false, true};
+	public static final boolean MASK_BG[] = {false, true, false, true, true};
+	public static final boolean MASK_SG[] = {false, false, true, true, true};
+	public static final boolean MASK_BSG[] = {false, true, true, true, true};
+
+
+	private TestWorld testWorld;
+
+	private HashSet<Position> visited;
+	private HashSet<Position> adjacentToBase;
+	private HashSet<Position> unwantedStates;
+	
+	private Hashtable<Position, String> dirLookUp;
+	private Hashtable<String, int[]> posLookUp;
+	private Hashtable<Position, StateT> wumpusWorld;
+>>>>>>> c54684ebe05f35c4632752dd08a7411bbe8d704d
 	
 	private KnowledgeBaseTest kb;
 	private Position current, previous;
@@ -49,9 +77,6 @@ public class AgentTesting {
 	private boolean fetchedGold = false;
 
 	public static final int[][] VALID_MOVES = {
-		//{-1,0}, {1,0},					// horizontal moves
-		//{0,-1}, {0,1}, 					// vertical moves
-		//{-1,-1}, {1,1}, {1,-1}, {-1,1},	// diagonal moves 
 		{1,1}, {1,0}, {1,-1}, {0,-1}, {-1,-1}, {-1,0}, {-1,1}, {0,1} 	
 	};
 
@@ -82,8 +107,8 @@ public class AgentTesting {
 		kb = new KnowledgeBaseTest(this);
 
 		// Set up a tables
-		dirLookUp = new Hashtable<Position, Direction>(10);
-		posLookUp = new Hashtable<Direction, int[]>(10);
+		dirLookUp = new Hashtable<Position, String>(10);
+		posLookUp = new Hashtable<String, int[]>(10);
 		setUpTables();
 
 
@@ -121,31 +146,7 @@ public class AgentTesting {
 		state.setValue(value);
 		
 		// Find the corresponding status to that value
-		switch(value) {
-		case -1:
-			state.setStatus(MASK_O);
-		case 0:
-			state.setStatus(MASK_N);
-		case 1:
-			state.setStatus(MASK_B);
-		case 2:
-			state.setStatus(MASK_S);
-		case 3:
-			state.setStatus(MASK_G);
-		case 4:
-			state.setStatus(MASK_B);
-			state.or(MASK_S);
-		case 5:
-			state.setStatus(MASK_B);
-			state.or(MASK_G);
-		case 6:
-			state.setStatus(MASK_S);
-			state.or(MASK_G);
-		case 7:
-			state.setStatus(MASK_B);
-			state.or(MASK_S);
-			state.or(MASK_G);
-		}
+		updateStates(state, position, value, true);
 		
 		wumpusWorld.put(position, state);
 		visited.add(position);
@@ -157,49 +158,11 @@ public class AgentTesting {
 		int value = state.getValue();
 		
 		// Start infer
-		switch(value) {
-		case -1:
-			// Set flag and go back (reverse)
-			state.and(MASK_O);
-			break;
-		case 0:
-			kb.setOk(current, wumpusWorld);
-			state.nothing = true;
-			// update stats
-			break;
-		case 1:
-			state.status = EnumSet.of(st);
-			kb.setPitPossibility(current);
-			break;
-		case 2:
-			kb.setWumpusPossibility(current);
-			break;
-		case 3:
-			kb.setOk(current, wumpusWorld);
-			state.glitter = true;
-			break;
-		case 4:
-			kb.setWumpusPossibility(current);
-			kb.setPitPossibility(current);
-			break;
-		case 5:
-			kb.setPitPossibility(current);
-			state.glitter = true;
-			break;
-		case 6:
-			kb.setWumpusPossibility(current);
-			state.glitter = true;
-			break;
-		case 7:
-			kb.setWumpusPossibility(current);
-			kb.setPitPossibility(current);
-			state.glitter = true;
-			break;	
-		}
+		updateStates(state, current, value, false);
 		
 		System.out.printf("Infer %s at %s\n",STATUS_STRING[value+1],current.toString());
 
-		if(state.glitter) {
+		if(state.isGold()) {
 			/*
 			 * The gold is found and thereby our mission is done. 
 			 * It is time for the great escape
@@ -208,11 +171,54 @@ public class AgentTesting {
 		}
 		
 	}
+	
+	private void updateStates(StateT state, Position position, int value, boolean percept) {
+		switch(value) {
+		case -1:
+			state.setStates(MASK_O);
+			break;
+		case 0:
+			state.setStates(MASK_N);
+			if(!percept) kb.setOk(position);
+			break;
+		case 1:
+			state.setStates(MASK_B);
+			if(!percept) kb.setPitPossibility(position);
+			break;
+		case 2:
+			state.setStates(MASK_S);
+			if(!percept) kb.setWumpusPossibility(position);
+			break;
+		case 3:
+			state.setStates(MASK_G);
+			if(!percept) kb.setOk(position);
+			break;
+		case 4:
+			state.setStates(MASK_BS);
+			if(!percept) {
+				kb.setWumpusPossibility(position);
+				kb.setPitPossibility(position);
+			}
+			break;
+		case 5:
+			state.setStates(MASK_BG);
+			if(!percept) kb.setPitPossibility(position);
+			break;
+		case 6:
+			state.setStates(MASK_SG);
+			if(!percept) kb.setWumpusPossibility(position);
+			break;
+		case 7:
+			state.setStates(MASK_BSG);
+			if(!percept) {
+				kb.setWumpusPossibility(position);
+				kb.setPitPossibility(position);
+			}
+			break;
+		}
+	}
 
 	private Position decideMove(Position current) {
-		//printWorld(current, true);
-		//System.out.println("Base square : "+current);
-
 		StateT state = percept(current);
 		infer(state, current);
 
@@ -220,8 +226,6 @@ public class AgentTesting {
 		
 		int count = 0;
 		Position newPos = null;
-		System.out.printf("=== Adjacent to [%d,%d] ===\n", 
-				current.getX(),current.getY());
 		for(int[] pos : VALID_MOVES) {
 			++count;
 			newPos = current.newPosition(pos[0], pos[1]);
@@ -283,15 +287,12 @@ public class AgentTesting {
 		};
 		
 		int i = 0;
-		for(Direction dir : Direction.values()) {
-			i = dir.ordinal();
-			int x = validMoves[i][0];
-			int y = validMoves[i][1];
-			int[] pos = {x,y};
-			Position position = new Position(x,y);
+		for(int[] pos : validMoves) {
+			int x = pos[0], y = pos[1];
+			Position position = new Position(x, y);
 			
-			dirLookUp.put(position, dir);
-			posLookUp.put(dir, pos);
+			dirLookUp.put(position, STATUS_STRING[i]);
+			posLookUp.put(STATUS_STRING[i], pos);
 		}
 	}
 

@@ -72,9 +72,9 @@ public class KnowledgeBaseTest {
 			Position newPosition = position.newPosition(pos[0], pos[1]);
 			StateT state = new StateT(newPosition, false);
 			
-			if(!state.ok && adjacent(position, state.position)) {
+			if(!state.isOk() && adjacent(position, state.position)
+					&& !newPosition.equals(position)) {
 				state.pitP += 1;			// Increase the chance that there is a pit
-				//setPit(s.position);	// Is there a pit there?
 			}
 		}
 	}
@@ -97,9 +97,10 @@ public class KnowledgeBaseTest {
 			Position newPosition = position.newPosition(pos[0], pos[1]);
 			StateT state = new StateT(newPosition, false);
 			
-			if(!state.ok && adjacent(position, state.position)) {
+			if(!state.isOk() && adjacent(position, state.position)
+					&& !newPosition.equals(position)) {
 				state.pitP += 1;		// Increase the chance that there is a pit
-				//setWumpus(s.position);	// Is it the home of the Wumpus?
+				//state.or(mask?)
 			}
 		}
 	}
