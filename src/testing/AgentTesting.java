@@ -21,18 +21,18 @@ import java.util.LinkedList;
  *
  */
 public class AgentTesting {
-	private final boolean DEBUG = true;
+	public static final boolean DEBUG = true;
 	
 	private final String STATUS_STRING[] = {
 			"DUMMY :D", "BORDER", "NOTHING", "BREEZE", "STENCH", "GLITTER", 
 			"STENCH_BREEZE", "GLITTER_BREEZE", "GLITTER_STENCH"
 			, "STENCH_GLITTER_BREEZE" };
 	
-	private final byte MASK_B[] = {0,0,1,0,0};
-	private final byte MASK_S[] = {0,0,0,1,0};
-	private final byte MASK_G[] = {0,0,0,0,1};
-	private final byte MASK_N[] = {1,0,0,0,0};
-	private final byte MASK_O[] = {0,1,0,0,0};
+	public static final byte MASK_B[] = {0,0,1,0,0};
+	public static final byte MASK_S[] = {0,0,0,1,0};
+	public static final byte MASK_G[] = {0,0,0,0,1};
+	public static final byte MASK_N[] = {1,0,0,0,0};
+	public static final byte MASK_O[] = {0,1,0,0,0};
 
 	private TestWorld testWorld;
 
@@ -58,8 +58,6 @@ public class AgentTesting {
 		//{-1,-1}, {1,1}, {1,-1}, {-1,1},	// diagonal moves 
 		{1,1}, {1,0}, {1,-1}, {0,-1}, {-1,-1}, {-1,0}, {-1,1}, {0,1} 	
 	};
-	
-	
 
 	/**
 	 * Entry point
@@ -85,7 +83,7 @@ public class AgentTesting {
 		testWorld = new TestWorld(inputFile);
 
 		// Load the knowledge base
-		kb = new KnowledgeBaseTest();
+		kb = new KnowledgeBaseTest(this);
 
 		// Set up a tables
 		dirLookUp = new Hashtable<Position, Direction>(10);
@@ -109,6 +107,13 @@ public class AgentTesting {
 			previous = current;
 			current = t;
 		} while(true);
+	}
+	
+	public boolean addState(StateT state, Position position) {
+		if(wumpusWorld.contains(position)) return false;
+		
+		wumpusWorld.put(position, state);
+		return true;
 	}
 
 	private StateT percept(Position current) {
@@ -162,13 +167,11 @@ public class AgentTesting {
 		case -1:
 			// Set flag and go back (reverse)
 			state.and(MASK_O);
-			//reverse(current);
 			break;
 		case 0:
-			System.out.printf("Infer %s at %s\n",STATUS_STRING[value+1],current.toString());
 			kb.setOk(current, wumpusWorld);
 			state.nothing = true;
-			state.setValue(st.getStatus());
+			// update stats
 			break;
 		case 1:
 			state.status = EnumSet.of(st);
@@ -199,6 +202,8 @@ public class AgentTesting {
 			state.glitter = true;
 			break;	
 		}
+		
+		System.out.printf("Infer %s at %s\n",STATUS_STRING[value+1],current.toString());
 
 		if(state.glitter) {
 			/*

@@ -1,5 +1,3 @@
-import java.util.HashMap;
-
 /**
  * Contains the information we are able to 
  * infer from the given rules and logical
@@ -10,7 +8,11 @@ import java.util.HashMap;
  *
  */
 public class KnowledgeBaseTest {	
-	public KnowledgeBaseTest() {}
+	AgentTesting agent;
+	
+	public KnowledgeBaseTest(AgentTesting agent) {
+		this.agent = agent; 
+	}
 	
 	/**
 	 * Checks if two squares are adjacent or not. 
@@ -39,17 +41,14 @@ public class KnowledgeBaseTest {
 	 * 
 	 * @param state State currently in
 	 */
-	public void setOk(Position position, HashMap<Position, StateT> world) {		
-		System.out.println("KnowledgeBaseTest.setOk()");
-		System.out.println("Current position = "+position);
+	public void setOk(Position position) {
 		for(int[] pos : Agent.VALID_MOVES) {
 			Position newPosition = position.newPosition(pos[0], pos[1]);
-			System.out.println(newPosition);
-			StateT state = new StateT(newPosition, false);
 			
-			if(adjacent(position, newPosition) && newPosition != position) {
-				world.put(newPosition, state);
-				state.ok = true;
+			if(adjacent(position, newPosition) && !newPosition.equals(position)) {
+				StateT state = new StateT(newPosition, false);
+				agent.addState(state, newPosition);
+				state.and(AgentTesting.MASK_N);
 			}
 		}
 	}
