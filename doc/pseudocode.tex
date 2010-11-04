@@ -23,7 +23,8 @@ The agent only moves to tiles that it knows are safe, and that it has not visite
 \begin{algorithmic}[1]
 \REQUIRE CROSS MOVES $\leftarrow$ [(1,0),(-1,0),(0,1),(0,-1)]
 \REQUIRE DIAGONAL MOVES $\leftarrow$ [(1,1),(-1,-1),(1,-1),(-1,1)]
-\REQUIRE a KnowledgeBase
+\REQUIRE KnowledgeBase $\leftarrow$ $\emptyset$
+\REQUIRE explored $\leftarrow$ $\emptyset$
 
 \STATE origin $\leftarrow$ (0,0)
 \STATE base $\leftarrow$ origin
@@ -132,8 +133,6 @@ The agent only moves to tiles that it knows are safe, and that it has not visite
 \STATE currentPosition $\leftarrow$ nextPosition
 \UNTIL{currentPosition = (0,0)} 
 \IF{$\lnot$foundTheGold}
-\STATE \textbf{clear}(KnowledgeBase)
-\STATE \textbf{clear}(explored)
 \STATE \textbf{explore}
 \ENDIF
 \end{algorithmic}
