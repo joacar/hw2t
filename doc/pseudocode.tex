@@ -24,7 +24,11 @@
 \STATE base $\leftarrow$ origin
 
 \LOOP
+\STATE base state $\leftarrow$ \textbf{perceive}
+\STATE KnowledgeBase.\textbf{put}(base state)
 \STATE \textbf{infer}(base)
+\STATE \textbf{explored}(base.X,base.Y) $\leftarrow$ $true$
+\STATE 
 \STATE MOVES $\leftarrow$ CROSS MOVES $\cup$ \textbf{shuffle}(DIAGONAL MOVES)
 
 \FORALL{Move m in MOVES}
