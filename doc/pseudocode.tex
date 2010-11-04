@@ -1,0 +1,122 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[latin1]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+\author{Pascal Chatterjee & Joakim Carselind}
+\title{CS3243 HW2T: Agent}
+
+\begin{document} 
+\begin{algorithm}
+\caption{Search Function}
+\label{explore}
+
+\begin{algorithmic}[1]
+
+\REQUIRE CROSS MOVES $\leftarrow$ [(1,0),(-1,0),(0,1),(0,-1)]
+\REQUIRE DIAGONAL MOVES $\leftarrow$ [(1,1),(-1,-1),(1,-1),(-1,1)]
+\REQUIRE a KnowledgeBase
+
+\STATE origin $\leftarrow$ (0,0)
+\STATE base $\leftarrow$ origin
+
+\LOOP
+\STATE \textbf{infer}(base)
+\STATE MOVES $\leftarrow$ CROSS MOVES $\cup$ \textbf{shuffle}(DIAGONAL MOVES)
+
+\FORALL{Move m in MOVES}
+\STATE newX $\leftarrow$ base.x $+$ m.x 
+\STATE newY $\leftarrow$ base.y $+$ m.y
+
+\IF{\textbf{isSafe}(newX,newY) $\wedge$  $\lnot$ \textbf{explored}(newX,newY)}
+\STATE \textbf{moveTo}(newX,newY)
+\STATE state $\leftarrow$ \textbf{perceive}
+\STATE KnowledgeBase.\textbf{put}(state)
+\STATE \textbf{infer}(state)
+\STATE \textbf{explored}(newX,newY) $\leftarrow$ $true$
+\IF{\textbf{isGlittery}(state)}
+\STATE \textbf{pickUpGold}
+\STATE \textbf{escape}(newX,newY)
+\ENDIF
+\IF{m is the last Move in MOVES $\wedge$ $\lnot$\textbf{isBlack}(state)}
+\STATE base $\leftarrow$ (newX,newY)
+\ELSE
+\STATE \textbf{moveTo}(base.x,base.y)
+\ENDIF
+\ENDIF
+
+\ENDFOR
+\ENDLOOP
+\end{algorithmic}
+\end{algorithm}
+
+\newpage
+
+\begin{algorithm}
+\caption{Inference Function}
+\label{infer}
+\begin{algorithmic}[1]
+\REQUIRE a state to infer knowledge about
+\REQUIRE CROSS MOVES $\leftarrow$ [(1,0),(-1,0),(0,1),(0,-1)]
+\REQUIRE a KnowledgeBase to update
+\FORALL{Move m in CROSS MOVES}
+\STATE adjacentX $\leftarrow$ state.x $+$ m.x 
+\STATE adjacentY $\leftarrow$ state.y $+$ m.y
+
+\IF{KnowledgeBase.\textbf{contains}(adjacentX,adjacentY)}
+\STATE adjState $\leftarrow$ KnowledgeBase.\textbf{get}(adjacentX,adjacentY)
+\ELSE
+\STATE adjState $\leftarrow$ \textbf{new} State
+\ENDIF
+\STATE
+\IF{\textbf{isEmpty}(state)}
+\STATE adjState.isEmpty $\leftarrow$ $true$
+\ELSE
+\IF{\textbf{isBreezy}(state)}
+\STATE adjState.pitPossibility $\leftarrow$ adjState.pitPossibility + 1
+\ENDIF
+\IF{\textbf{isSmelly}(state)}
+\STATE adjState.wumpusPossibility $\leftarrow$ adjState.wumpusPossibility + 1
+\ENDIF
+\ENDIF
+\STATE KnowledgeBase.\textbf{update}(adjState)
+\ENDFOR
+\end{algorithmic}
+\end{algorithm}
+
+\newpage
+
+\begin{algorithm}
+\caption{Safety Evaluation Function}
+\label{isSafe}
+\begin{algorithmic}[1]
+\REQUIRE a position (x,y) to evaluate
+\REQUIRE a KnowledgeBase
+\STATE state $\leftarrow$ KnowledgeBase.\textbf{get}(x,y)
+\IF{\textbf{isEmpty}(state) $\vee$ (state.pitPossibility = 0 $\wedge$ state.wumpusPossibility = 0)}
+\RETURN $true$
+\ELSE
+\RETURN $false$
+\ENDIF
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+\caption{Escaping Function}
+\label{escape}
+\begin{algorithmic}[1]
+\REQUIRE a KnowledgeBase
+\REQUIRE a startingPosition
+\STATE currentPosition $\leftarrow$ startingPosition
+\REPEAT
+\STATE nextPosition $\leftarrow$ a safe neighbour of currentPosition that minimises the straight line distance to (0,0)
+\STATE \textbf{moveTo}(nextPosition)
+\STATE currentPosition $\leftarrow$ nextPosition
+\UNTIL{currentPosition = (0,0)} 
+\end{algorithmic}
+\end{algorithm}
+
+\end{document}
