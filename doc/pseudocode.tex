@@ -81,6 +81,7 @@ We ensure that we only move to tiles we have some knowledge about by making cros
 \REQUIRE a state to infer knowledge about
 \REQUIRE CROSS MOVES $\leftarrow$ [(1,0),(-1,0),(0,1),(0,-1)]
 \REQUIRE a KnowledgeBase to update
+\REQUIRE a list of explored states so we don't infer knowledge about states we already know everything about
 \FORALL{Move m in CROSS MOVES}
 \STATE adjacentX $\leftarrow$ state.x $+$ m.x 
 \STATE adjacentY $\leftarrow$ state.y $+$ m.y
@@ -91,6 +92,7 @@ We ensure that we only move to tiles we have some knowledge about by making cros
 \STATE adjState $\leftarrow$ \textbf{new} State
 \ENDIF
 \STATE
+\IF{$\lnot$\textbf{explored}(adjState)}
 \IF{\textbf{isEmpty}(state)}
 \STATE adjState.isEmpty $\leftarrow$ $true$
 \ELSE
@@ -99,6 +101,7 @@ We ensure that we only move to tiles we have some knowledge about by making cros
 \ENDIF
 \IF{\textbf{isSmelly}(state)}
 \STATE adjState.wumpusPossibility $\leftarrow$ adjState.wumpusPossibility + 1
+\ENDIF
 \ENDIF
 \ENDIF
 \STATE KnowledgeBase.\textbf{update}(adjState)
