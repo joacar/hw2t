@@ -1,3 +1,7 @@
+import java.io.BufferedReader;
+import java.io.IOError;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Random;
@@ -23,9 +27,9 @@ public class AgentTesting {
 	//private final String STATUS_STRING[] = Status.STRINGS;
 
 	public static final String STATUS_STRING[] = {
-			"BORDER", "NOTHING", "BREEZE", "STENCH", "GLITTER", 
-			"STENCH_BREEZE", "GLITTER_BREEZE", "GLITTER_STENCH"
-			, "STENCH_GLITTER_BREEZE" };
+		"BORDER", "NOTHING", "BREEZE", "STENCH", "GLITTER", 
+		"STENCH_BREEZE", "GLITTER_BREEZE", "GLITTER_STENCH"
+		, "STENCH_GLITTER_BREEZE" };
 
 	// boolean states[] = {border, breeze, stench, glitter, ok};
 	public static final boolean MASK_N[] = {false, false, false, false, true};
@@ -40,20 +44,22 @@ public class AgentTesting {
 
 	private TestWorld testWorld;
 
-	private Hashtable<Position, Integer> visited;
+	private Hashtable<Position, Integer> exploredStates;
+	private Hashtable<Position, StateT> knowledgeBase;
+
 	private Hashtable<Position, Integer> adjacentToBase;
 	private Hashtable<Position, Integer> unwantedStates;
 
 	private Hashtable<Position, String> dirLookUp;
 	private Hashtable<String, int[]> posLookUp;
-	private Hashtable<Position, StateT> knowledgeBase;
+
 
 	private KnowledgeBaseTest kb;
-	private Position current, previous;
+	public Position current = null, previous = null;
 
 	private Random rand;
 
-	private boolean fetchedGold = false;
+	private boolean foundTheGold = false;
 
 	public static final int[][] ADJACENT = { 
 		{1,0}, {-1,0}, {0,1}, {0,-1} };
@@ -61,6 +67,9 @@ public class AgentTesting {
 	public static final int[][] DIAGONAL = {
 		{1,-1}, {1,1}, {-1,-1}, {-1,1} };
 
+	// For testing
+	private BufferedReader br;
+	private RunTest runTest;
 	/**
 	 * Entry point
 	 *  
@@ -96,21 +105,37 @@ public class AgentTesting {
 	 */
 	private AgentTesting(String inputFile) {		
 		// Load the test world with the input fule
-		testWorld = new TestWorld(inputFile);
+		runTest = new RunTest(inputFile);
+		testWorld = runTest.testWorld; //new TestWorld(inputFile);
 
 		initialize();
 
-		Position current = new Position(0,0);
+		explore();
 
-		int cnt = 0;
-		Position base, oldBase;
-		do {
-			System.out.println("\ndecideMove called " + (++cnt) + " times\n\n");
-			base = decideMove(current);
-			previous = current;
-			current = base;
-		} while(!fetchedGold);
+	}
 
+	public void control() {
+		String line = null;
+		try {
+			br = new BufferedReader(new InputStreamReader(System.in));
+			System.out.printf("Move or stop, make your" +
+			" choice: " );
+			line = br.readLine();
+			if(line.equals("next")) {
+				runTest.upDateAgentMatrix(current);
+				runTest.upDateAgentLocation(current, previous);
+				runTest.print(current);
+				explore();
+			}
+			if(line.equals("stop")) {
+				System.exit(0);
+			}
+		} catch(IOError e) {
+			System.err.println("Error "+e.getMessage());
+		} catch(Exception e) {
+			System.err.println("Error "+e.getMessage());
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -127,11 +152,95 @@ public class AgentTesting {
 
 		adjacentToBase = new Hashtable<Position, Integer>();
 		unwantedStates = new Hashtable<Position, Integer>();
-		visited = new Hashtable<Position, Integer>();
+		exploredStates = new Hashtable<Position, Integer>();
 
 		knowledgeBase = new Hashtable<Position, StateT>();
 
 		rand = new Random();
+	}
+
+	private void explore() {
+		Position origin = new Position(0,0), base, newPosition,
+		lastKnownSafePosition = null;
+		StateT state = percept(origin);
+		knowledgeBase.put(origin, state);
+		inference(state); //infer(state);
+		explored(origin);
+		current = base = origin;
+
+		int movesMade = 0;
+		do {
+			for(int[] pos : AgentTesting.ADJACENT) {
+				int newX = base.getX() + pos[0];
+				int newY = base.getY() + pos[1];
+
+				previous = current;
+				current = newPosition = new Position(newX, newY);
+				if(move(newPosition, movesMade)) {
+					lastKnownSafePosition = newPosition;
+				}
+			}
+
+			ArrayList<int[]> diagonal = new ArrayList<int[]>();
+
+			for(int[] pos : DIAGONAL) diagonal.add(pos);
+			// Shuffle the diagonal moves
+			int size = diagonal.size(), index;
+			for(int i = 0; i < size; i++) {
+				size = diagonal.size();
+				index = rand.nextInt(size);
+
+				int[] pos = diagonal.get(index);
+				diagonal.remove(index);
+
+				int newX = base.getX() + pos[0];
+				int newY = base.getY() + pos[1];
+
+				previous = current;
+				current = newPosition = new Position(newX, newY);
+
+				if(move(newPosition, movesMade)) {
+					lastKnownSafePosition = newPosition;
+				}
+			}
+
+			if(movesMade == 0) {	//lastKnowSafePosition == null
+				//escape()
+			}
+			base = lastKnownSafePosition;
+		}while(true);
+	}
+
+	private boolean move(Position position, int movesMade) {
+		StateT state = null;
+
+		if(knowledgeBase.contains(position)) {
+			// Hmmz TODO
+			state = knowledgeBase.get(position);
+		} else {			
+			if(isSafe(position) && !explored(position)) {
+				//moveTo(position)
+				movesMade += 1;
+				state = percept(position);
+
+				knowledgeBase.put(position, state);
+				explored(position);
+
+				inference(state);
+
+				if(state.isGlittery()) {
+					foundTheGold = true;
+					//escape()
+				}
+
+				/*if(!state.isBorder()) {
+					//nextBase = ;
+				}*/
+				if(state.isBorder()) return false;
+				//moveTo(base.x, base.y)
+			}
+		}
+		return true;
 	}
 
 	/**
@@ -140,26 +249,23 @@ public class AgentTesting {
 	 * @return
 	 */
 	private StateT percept(Position current) {
+		control();
 		// Make the new position for this state
 		Position position = current.newPosition();
-		
 		// Get the value (percept)
 		int value = testWorld.getPercept(position);
-		
+
 		StateT state = new StateT(position, true); 
 		state.setValue(value);
 
 		// Find the corresponding status to that value
 		updateStates(state, value);
 
-		knowledgeBase.put(position, state);
-		visited.put(position, 0);
-		
 		if(DEBUG) {
 			System.out.println("AgentTesting.percept()");
 			System.out.printf("\tPerceiving %s\n", state.toString());
 		}
-		
+
 		return state;
 	}
 
@@ -168,35 +274,68 @@ public class AgentTesting {
 			System.out.println("AgentTesting.infer()");
 		}
 		Position position = state.position;
-		
+		StateT adjacent = null;
 		for(int[] pos : ADJACENT) {
-			position = current.newPosition(pos[0], pos[1]);
-			
+			position = position.newPosition(pos[0], pos[1]);
+
 			if(knowledgeBase.contains(position)) {
-				state = knowledgeBase.get(position);
+				adjacent = knowledgeBase.get(position);
 			} else {
-				state = new StateT(position, false);
+				adjacent = new StateT(position, false);
 			}
+
 			if(state.isOk()) {
-				
-				kb.setOk(position);
+				//kb.setOk(position);
+				adjacent.setOk();
 			} else {
 				if(state.isBreezy()) {
-					kb.setPitPossibility(position);
+					adjacent.setPit();
+					adjacent.incrementPit();
+					//kb.setPitPossibility(position);
 				}
 				if(state.isSmelly()) {
-					System.out.println("isSmelly() = "+state.isSmelly());
-					kb.setWumpusPossibility(position);
+					kb.setWumpusPossibility(adjacent);
+					adjacent.setWumpus();
+					adjacent.incrementWumpus();
 				}
 			}
 
-			if(state.isGold()) {
-				fetchedTheGold();
-			}
-
-			if(DEBUG) System.out.printf("\tInfered %s\n",state.toString());
-			addState(position, state);
+			if(DEBUG) System.out.printf("\tInfered @ %s\n",adjacent.toString());
+			addState(position, adjacent);
 		}
+	}
+
+	public void inference(StateT state) {
+		if(DEBUG) {
+			System.out.println("AgentTesting.inference()");
+		}
+
+		if(state.isOk()) {
+			kb.setOk(state);
+		} else {
+			if(state.isBreezy()) {
+				kb.setPitPossibility(state);
+			}
+			if(state.isSmelly()) {
+				kb.setWumpusPossibility(state);
+			}
+		}
+
+		if(DEBUG) System.out.printf("\tInfered @ %s\n",state.toString());
+	}
+
+	private boolean isSafe(Position position) {
+		StateT state = knowledgeBase.get(position);
+
+		if(state.isBorder()) {
+			return false;
+		}
+
+		if(state.isOk() || (state.getPitPossibility() <= 0 && state.getWumpusPossibility() <= 0)) {
+			return true;	
+		}
+
+		return false;
 	}
 
 	private void updateStates(StateT state, int value) {
@@ -239,7 +378,8 @@ public class AgentTesting {
 			return previous;
 		}
 
-		infer(state);
+		//infer(state);
+		inference(state);
 		Position lastKnownSafePosition = null;
 		Position newPos = null;
 
@@ -249,12 +389,12 @@ public class AgentTesting {
 			String dir = dirLookUp.get(newPos);
 			newPos.setHeading(dir);
 
-			if(state.isOk() && notExplored(newPos) && notBorder(newPos)) {
+			if(state.isOk() && explored(newPos) && notBorder(newPos)) {
 				// Move to new position
 				state = percept(newPos);
 				adjacentToBase.put(newPos, 0);
 
-				infer(state);
+				inference(state);//infer(state);
 
 				lastKnownSafePosition = newPos;
 			}
@@ -276,12 +416,12 @@ public class AgentTesting {
 			String dir = dirLookUp.get(newPos);
 			newPos.setHeading(dir);
 
-			if(state.isOk()  && notExplored(newPos) && notBorder(newPos)) {
+			if(state.isOk()  && explored(newPos) && notBorder(newPos)) {
 				// Move to new position
 				state = percept(newPos);
 				adjacentToBase.put(newPos, 0);
 
-				infer(state);
+				inference(state);//infer(state);
 
 				lastKnownSafePosition = newPos;
 			}
@@ -291,29 +431,6 @@ public class AgentTesting {
 		if(lastKnownSafePosition == null) ;// return oldBase;
 
 		return newPos;
-	}
-
-	/**
-	 * Moves to the direction we are currently looking
-	 */
-	private void move(Position current) {
-		int[] move = posLookUp.get(current.getHeading());
-		current.change(move);
-	}
-
-	/**
-	 * Go back to our previous location facing the
-	 * same direction as when we entered the state
-	 */
-	private void reverse(Position current) {
-		int[] undo = new int[2];
-		/*for(Direction dir : Direction.values())
-			if(dir.getHeading() == -current.getHeadingInt())
-				undo = posLookUp.get(dir);*/
-
-		System.out.printf("\tReverse [%d,%d]",current.getX(), current.getY());
-		current.change(undo);
-		System.out.printf(" back to [%d,%d]\n", current.getX(), current.getY());
 	}
 
 	/**
@@ -348,7 +465,7 @@ public class AgentTesting {
 	private void fetchedTheGold() {
 		System.out.println("I'm rich! Now it's time"+
 		" to get the f*ck out of this world!");
-		fetchedGold = true;
+		foundTheGold = true;
 	}
 
 	/**
@@ -373,7 +490,9 @@ public class AgentTesting {
 	 * @return state in our world
 	 */
 	public StateT getState(Position position) {
-		return knowledgeBase.get(position);
+		if(knowledgeBase.contains(position)) return knowledgeBase.get(position);
+
+		return null;
 	}
 
 	/**
@@ -386,25 +505,19 @@ public class AgentTesting {
 	}
 
 	/**
-	 * Return true if position has been visited
-	 * 
-	 * @param position to be checked
-	 * @return true if position has been visited,
-	 * 		false otherwise
-	 */
-	public boolean isVisited(Position position) {
-		return visited.contains(position);
-	}
-
-	/**
-	 * Return true if position has not yet been explored
+	 * Return true if position has been explored
 	 * 
 	 * @param position to be explored
-	 * @return true if position not yet explored,
+	 * @return true if position explored,
 	 * 		false otherwise
 	 */
-	public boolean notExplored(Position position) {
-		return !isVisited(position);
+	public boolean explored(Position position) {
+		if(exploredStates.contains(position)) {
+			return true;
+		} else {
+			exploredStates.put(position, 0);
+			return false;
+		}
 	}
 
 	/**
