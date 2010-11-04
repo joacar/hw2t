@@ -41,10 +41,10 @@ We ensure that we only move to tiles we have some knowledge about by making cros
 \STATE
 \LOOP
 \STATE MOVES $\leftarrow$ CROSS MOVES $\cup$ \textbf{shuffle}(DIAGONAL MOVES)
+\STATE movesMade $\leftarrow$ 0
 \FORALL{Move m in MOVES}
 \STATE newX $\leftarrow$ base.x $+$ m.x 
 \STATE newY $\leftarrow$ base.y $+$ m.y
-\STATE movesMade $\leftarrow$ 0
 \IF{\textbf{isSafe}(newX,newY) $\wedge$  $\lnot$ \textbf{explored}(newX,newY)}
 \STATE \textbf{moveTo}(newX,newY)
 \STATE movesMade $\leftarrow$ movesMade + 1
