@@ -1,0 +1,4 @@
+Matric Numbers: A0075885L,A0075840A
+Emails: a0075885@nus.edu.sg, a0075840a@nus.edu.sg
+
+Our evaluation function, and everything else to do with our agent, is documented in pseudocode.pdf. We have not been able to code a working implementation, so we would like our evaluation function to be marked based on how effective our pseudocode is.
