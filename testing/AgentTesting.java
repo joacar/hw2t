@@ -70,7 +70,7 @@ public class AgentTesting {
 	// For testing
 	private BufferedReader br;
 	private RunTest runTest;
-	private int moveNumber = 0;
+	private int moveNumber = 1;
 	/**
 	 * Entry point
 	 *  
@@ -183,6 +183,8 @@ public class AgentTesting {
 				current = newPosition = new Position(newX, newY);
 				if(move(newPosition, movesMade)) {
 					lastKnownSafePosition = newPosition;
+				} else {
+					current = previous;
 				}
 			}
 
@@ -206,6 +208,8 @@ public class AgentTesting {
 
 				if(move(newPosition, movesMade)) {
 					lastKnownSafePosition = newPosition;
+				} else {
+					current = previous;
 				}
 			}
 
@@ -217,19 +221,22 @@ public class AgentTesting {
 	}
 
 	private boolean move(Position position, int movesMade) {
+		System.out.printf("Moving from [%d,%d] to [%d,%d]\n",
+				previous.getX(), previous.getY(), current.getX(), current.getY());
 		StateT state = null;
 		moveNumber += 1;
 		if(knowledgeBase.contains(position)) {
 			// Hmmz TODO
 			state = knowledgeBase.get(position);
 		} else {			
+			// If not explored, add it and then explore it
 			if(isSafe(position) && !explored(position)) {
 				//moveTo(position)
 				movesMade += 1;
 				state = percept(position);
 				currentState = state;
 				knowledgeBase.put(position, state);
-				explored(position);
+				explored(position);	// Already done in the if-clause
 
 				inference(state);
 
