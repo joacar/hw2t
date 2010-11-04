@@ -10,12 +10,15 @@
 \title{CS3243 HW2T: Agent}
 
 \begin{document} 
+
+Below are the algorithms that make up the AI for our agent. We chose to use a model-based agent, as a purely reflex based agent would not take advantage of the possibilities of logical inference in the world, and the lack of information about the proximity of the gold would have made a goal-based agent useless.
+
+\listofalgorithms 
+
 \begin{algorithm}
-\caption{Search Function}
+\caption{Search Function - \textbf{explore}()}
 \label{explore}
-
 \begin{algorithmic}[1]
-
 \REQUIRE CROSS MOVES $\leftarrow$ [(1,0),(-1,0),(0,1),(0,-1)]
 \REQUIRE DIAGONAL MOVES $\leftarrow$ [(1,1),(-1,-1),(1,-1),(-1,1)]
 \REQUIRE a KnowledgeBase
@@ -64,7 +67,7 @@
 \newpage
 
 \begin{algorithm}
-\caption{Inference Function}
+\caption{Inference Function - \textbf{infer}()}
 \label{infer}
 \begin{algorithmic}[1]
 \REQUIRE a state to infer knowledge about
@@ -98,7 +101,7 @@
 \newpage
 
 \begin{algorithm}
-\caption{Safety Evaluation Function}
+\caption{Safety Evaluation Function - \textbf{isSafe}()}
 \label{isSafe}
 \begin{algorithmic}[1]
 \REQUIRE a position (x,y) to evaluate
@@ -113,7 +116,7 @@
 \end{algorithm}
 
 \begin{algorithm}
-\caption{Escaping Function}
+\caption{Escaping Function - \textbf{escape}()}
 \label{escape}
 \begin{algorithmic}[1]
 \REQUIRE a KnowledgeBase
