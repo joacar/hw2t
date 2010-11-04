@@ -114,6 +114,13 @@ public class KnowledgeBaseTest {
 			newPosition = position.newPosition(pos[0], pos[1]);
 			adjacent = new StateT(newPosition, false);
 			
+			/*
+			 * If the adjacent state is not in our knowledge
+			 * base, create a new state for the position
+			 */
+			adjacent = agent.getState(newPosition);
+			if(adjacent == null ) adjacent = new StateT(newPosition, false);
+			
 			if(!agent.explored(newPosition)) {
 				adjacent.incrementWumpus();
 				adjacent.setWumpus();
