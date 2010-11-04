@@ -13,7 +13,9 @@
 
 Below are the algorithms that make up the AI for our agent. We chose to use a model-based agent, as a purely reflex based agent would not take advantage of the possibilities of logical inference in the world, and the lack of information about the proximity of the gold would have made a goal-based agent useless.
 
-The agent only moves to tiles that it knows are safe, and that it has not visited previously. If the agent ever finds itself in a position in which it cannot move to a safe, unexplored tile, it will return to the origin and start over. This means that we reduce the risk of our agent trapping itself in a region of the map, but also that our agent refuses to accept the possibility that there is no way of reaching the gold (if any exists). Our AI will \textit{never give up}.  
+The agent only moves to tiles that it knows are safe, and that it has not visited previously. If the agent ever finds itself in a position in which it cannot move to a safe, unexplored tile, it will return to the origin and start over. This eliminates the risk of our agent trapping itself in a region of the map and exiting prematurely. However, this also means that our agent refuses to accept the possibility that there is no way of reaching the gold (if any exists). In other words, our AI will \textit{never give up}.  
+
+We ensure that we only move to tiles we have some knowledge about by making cross-moves before diagonal ones. As we also shuffle the order in which we do diagonal moves, our choice of the next base (which is the tile reached via the last executed safe move) has a degree of randomness. This should reduce the risk of our agent boxing itself into a region (and even if it does, as explained above, we will still start over).  
 
 \listofalgorithms 
 
@@ -54,7 +56,7 @@ The agent only moves to tiles that it knows are safe, and that it has not visite
 \STATE foundTheGold $\leftarrow$ $true$
 \STATE \textbf{escape}(newX,newY)
 \ENDIF
-\IF{m is the last Move in MOVES $\wedge$ $\lnot$\textbf{isBlack}(state)}
+\IF{m is the last safe Move in MOVES $\wedge$ $\lnot$\textbf{isBlack}(state)}
 \STATE base $\leftarrow$ (newX,newY)
 \ELSE
 \STATE \textbf{moveTo}(base.x,base.y)
