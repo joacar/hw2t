@@ -1,10 +1,8 @@
-import java.io.BufferedReader;
-import java.io.IOError;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.Random;
 
- /** The AI for the classic and legendary game Wumpus world!
+/** The AI for the classic and legendary game Wumpus world!
  * 
  * The AI starts with percieving to see if anything new about
  * the world can be noticed. If so, it takes that new
@@ -21,47 +19,47 @@ import java.util.Hashtable;
  */
 public class AgentTesting {
 	public static final boolean DEBUG = true;
-	
+
 	//private final String STATUS_STRING[] = Status.STRINGS;
-	
-	private final String STATUS_STRING[] = {
-			"DUMMY :D", "BORDER", "NOTHING", "BREEZE", "STENCH", "GLITTER", 
+
+	public static final String STATUS_STRING[] = {
+			"BORDER", "NOTHING", "BREEZE", "STENCH", "GLITTER", 
 			"STENCH_BREEZE", "GLITTER_BREEZE", "GLITTER_STENCH"
 			, "STENCH_GLITTER_BREEZE" };
-	
+
 	// boolean states[] = {border, breeze, stench, glitter, ok};
 	public static final boolean MASK_N[] = {false, false, false, false, true};
 	public static final boolean MASK_O[] = {true, false, false, false, false};	
-	public static final boolean MASK_B[] = {false, true, false, false, true};
-	public static final boolean MASK_S[] = {false, false, true, false, true};
-	public static final boolean MASK_G[] = {false, false, false, true, true};
-	public static final boolean MASK_BS[] = {false, true, true, false, true};
-	public static final boolean MASK_BG[] = {false, true, false, true, true};
-	public static final boolean MASK_SG[] = {false, false, true, true, true};
-	public static final boolean MASK_BSG[] = {false, true, true, true, true};
-
+	public static final boolean MASK_B[] = {false, true, false, false, false};
+	public static final boolean MASK_S[] = {false, false, true, false, false};
+	public static final boolean MASK_G[] = {false, false, false, true, false};
+	public static final boolean MASK_BS[] = {false, true, true, false, false};
+	public static final boolean MASK_BG[] = {false, true, false, true, false};
+	public static final boolean MASK_SG[] = {false, false, true, true, false};
+	public static final boolean MASK_BSG[] = {false, true, true, true, false};
 
 	private TestWorld testWorld;
-	
+
 	private Hashtable<Position, Integer> visited;
 	private Hashtable<Position, Integer> adjacentToBase;
 	private Hashtable<Position, Integer> unwantedStates;
-	
+
 	private Hashtable<Position, String> dirLookUp;
 	private Hashtable<String, int[]> posLookUp;
-	private Hashtable<Position, StateT> wumpusWorld;
-	
+	private Hashtable<Position, StateT> knowledgeBase;
+
 	private KnowledgeBaseTest kb;
 	private Position current, previous;
 
+	private Random rand;
+
 	private boolean fetchedGold = false;
 
-	public static final int[][] VALID_MOVES = {
-		{1,0}, {0,-1}, {-1,0}, {0,1}, {1,-1}, {1,1}, {-1,-1}, {-1,1}, 	
-	};
-	
-	public static final int[][] ADJACENT = { {1,0}, {-1,0}, {0,1}, {0,-1} };
+	public static final int[][] ADJACENT = { 
+		{1,0}, {-1,0}, {0,1}, {0,-1} };
 
+	public static final int[][] DIAGONAL = {
+		{1,-1}, {1,1}, {-1,-1}, {-1,1} };
 
 	/**
 	 * Entry point
@@ -77,12 +75,19 @@ public class AgentTesting {
 		new AgentTesting(args[0]);
 	}
 
+	/**
+	 * Constructor used for simulating tests on the 
+	 * computer instead of using the actual robot. This
+	 * is a good way to test that the logic works as
+	 * it should
+	 * 
+	 * @param testWorld
+	 */
 	public AgentTesting(TestWorld testWorld) {
 		this.testWorld = testWorld;
-		
+
 		initialize();
-		
-		
+
 	}
 	/**
 	 * Constructor taking a input file
@@ -94,23 +99,23 @@ public class AgentTesting {
 		testWorld = new TestWorld(inputFile);
 
 		initialize();
-		
-		// TODO add forward direction
+
 		Position current = new Position(0,0);
 
-		wumpusWorld = new Hashtable<Position, StateT>();
-		
 		int cnt = 0;
-		Position t;
+		Position base, oldBase;
 		do {
 			System.out.println("\ndecideMove called " + (++cnt) + " times\n\n");
-			t = decideMove(current);
+			base = decideMove(current);
 			previous = current;
-			current = t;
+			current = base;
 		} while(!fetchedGold);
 
 	}
-	
+
+	/**
+	 * Sets up the vital parameters
+	 */
 	private void initialize() {
 		// Load the knowledge base
 		kb = new KnowledgeBaseTest(this);
@@ -120,138 +125,171 @@ public class AgentTesting {
 		posLookUp = new Hashtable<String, int[]>(10);
 		setUpTables();
 
-
 		adjacentToBase = new Hashtable<Position, Integer>();
 		unwantedStates = new Hashtable<Position, Integer>();
 		visited = new Hashtable<Position, Integer>();
-				
-		wumpusWorld = new Hashtable<Position, StateT>();	
-	}
-	
-	/**
-	 * Add a state to the agent world
-	 * 
-	 * @param state added
-	 * @param position to that state
-	 * @return true iff already added,
-	 * 		false otherwise
-	 */
-	public boolean addState(StateT state, Position position) {
-		if(wumpusWorld.contains(position)) return false;
-		
-		wumpusWorld.put(position, state);
-		return true;
+
+		knowledgeBase = new Hashtable<Position, StateT>();
+
+		rand = new Random();
 	}
 
+	/**
+	 * 
+	 * @param current
+	 * @return
+	 */
 	private StateT percept(Position current) {
 		// Make the new position for this state
 		Position position = current.newPosition();
 		
 		// Get the value (percept)
 		int value = testWorld.getPercept(position);
+		
 		StateT state = new StateT(position, true); 
 		state.setValue(value);
-		
-		// Find the corresponding status to that value
-		updateStates(state, position, value, true);
-		
-		wumpusWorld.put(position, state);
-		visited.put(position, 0);
 
+		// Find the corresponding status to that value
+		updateStates(state, value);
+
+		knowledgeBase.put(position, state);
+		visited.put(position, 0);
+		
+		if(DEBUG) {
+			System.out.println("AgentTesting.percept()");
+			System.out.printf("\tPerceiving %s\n", state.toString());
+		}
+		
 		return state;
 	}
 
-	private void infer(StateT state, Position current) {
-		int value = state.getValue();
-		
-		// Start infer
-		updateStates(state, current, value, false);
-		
-		System.out.printf("Infer %s at %s\n",STATUS_STRING[value+1],current.toString());
-
-		if(state.isGold()) {
-			/*
-			 * The gold is found and thereby our mission is done. 
-			 * It is time for the great escape
-			 */
-			fetchedTheGold();
+	private void infer(StateT state) {
+		if(DEBUG) {
+			System.out.println("AgentTesting.infer()");
 		}
+		Position position = state.position;
 		
+		for(int[] pos : ADJACENT) {
+			position = current.newPosition(pos[0], pos[1]);
+			
+			if(knowledgeBase.contains(position)) {
+				state = knowledgeBase.get(position);
+			} else {
+				state = new StateT(position, false);
+			}
+			if(state.isOk()) {
+				
+				kb.setOk(position);
+			} else {
+				if(state.isBreezy()) {
+					kb.setPitPossibility(position);
+				}
+				if(state.isSmelly()) {
+					System.out.println("isSmelly() = "+state.isSmelly());
+					kb.setWumpusPossibility(position);
+				}
+			}
+
+			if(state.isGold()) {
+				fetchedTheGold();
+			}
+
+			if(DEBUG) System.out.printf("\tInfered %s\n",state.toString());
+			addState(position, state);
+		}
 	}
-	
-	private void updateStates(StateT state, Position position, int value, boolean percept) {
+
+	private void updateStates(StateT state, int value) {
 		switch(value) {
 		case -1:
 			state.setStates(MASK_O);
 			break;
 		case 0:
 			state.setStates(MASK_N);
-			if(!percept) kb.setOk(position);
 			break;
 		case 1:
 			state.setStates(MASK_B);
-			if(!percept) kb.setPitPossibility(position);
 			break;
 		case 2:
 			state.setStates(MASK_S);
-			if(!percept) kb.setWumpusPossibility(position);
 			break;
 		case 3:
 			state.setStates(MASK_G);
-			if(!percept) kb.setOk(position);
 			break;
 		case 4:
 			state.setStates(MASK_BS);
-			if(!percept) {
-				kb.setWumpusPossibility(position);
-				kb.setPitPossibility(position);
-			}
 			break;
 		case 5:
 			state.setStates(MASK_BG);
-			if(!percept) kb.setPitPossibility(position);
 			break;
 		case 6:
 			state.setStates(MASK_SG);
-			if(!percept) kb.setWumpusPossibility(position);
 			break;
 		case 7:
 			state.setStates(MASK_BSG);
-			if(!percept) {
-				kb.setWumpusPossibility(position);
-				kb.setPitPossibility(position);
-			}
 			break;
 		}
 	}
 
 	public Position decideMove(Position current) {
+		System.out.println("==== AgentTesting.decideMove() ====");
 		StateT state = percept(current);
-		infer(state, current);
+		if(state.isBorder()) {
+			unwantedStates.put(current, 0);
+			return previous;
+		}
 
+		infer(state);
 		Position lastKnownSafePosition = null;
-		
-		int count = 0;
 		Position newPos = null;
-		for(int[] pos : VALID_MOVES) {
-			++count;
+
+		for(int[] pos : ADJACENT) {
 			newPos = current.newPosition(pos[0], pos[1]);
-			
+
 			String dir = dirLookUp.get(newPos);
 			newPos.setHeading(dir);
 
-			if(!visited.contains(newPos) && !unwantedStates.contains(newPos)) {
+			if(state.isOk() && notExplored(newPos) && notBorder(newPos)) {
+				// Move to new position
 				state = percept(newPos);
 				adjacentToBase.put(newPos, 0);
-				
-				System.out.printf("  %d. %s status %s\n",count,newPos.toString(),newPos.getHeading());
 
-				infer(state, newPos);
+				infer(state);
 
+				lastKnownSafePosition = newPos;
 			}
 		}
+
+		ArrayList<int[]> diagonal = new ArrayList<int[]>();
+
+		for(int[] pos : DIAGONAL) diagonal.add(pos);
+		// Shuffle the diagonal moves
+		int size = diagonal.size(), index;
+		for(int i = 0; i < size; i++) {
+			size = diagonal.size();
+			index = rand.nextInt(size);
+
+			int[] pos = diagonal.get(index);
+			diagonal.remove(index);
+			newPos = newPos.newPosition(pos[0], pos[1]);
+
+			String dir = dirLookUp.get(newPos);
+			newPos.setHeading(dir);
+
+			if(state.isOk()  && notExplored(newPos) && notBorder(newPos)) {
+				// Move to new position
+				state = percept(newPos);
+				adjacentToBase.put(newPos, 0);
+
+				infer(state);
+
+				lastKnownSafePosition = newPos;
+			}
+		}
+
 		// We couldnt move from our new base. Go back to old base.
-		if(lastKnownSafePosition == null);
+		if(lastKnownSafePosition == null) ;// return oldBase;
+
 		return newPos;
 	}
 
@@ -259,7 +297,6 @@ public class AgentTesting {
 	 * Moves to the direction we are currently looking
 	 */
 	private void move(Position current) {
-		if(current == null) System.out.println(true);
 		int[] move = posLookUp.get(current.getHeading());
 		current.change(move);
 	}
@@ -270,9 +307,9 @@ public class AgentTesting {
 	 */
 	private void reverse(Position current) {
 		int[] undo = new int[2];
-		for(Direction dir : Direction.values())
+		/*for(Direction dir : Direction.values())
 			if(dir.getHeading() == -current.getHeadingInt())
-				undo = posLookUp.get(dir);
+				undo = posLookUp.get(dir);*/
 
 		System.out.printf("\tReverse [%d,%d]",current.getX(), current.getY());
 		current.change(undo);
@@ -293,48 +330,15 @@ public class AgentTesting {
 		int[][] validMoves = {
 				{1,1}, {1,0}, {1,-1}, {0,-1}, {-1,-1}, {-1,0}, {-1,1}, {0,1} 
 		};
-		
+
 		int i = 0;
 		for(int[] pos : validMoves) {
 			int x = pos[0], y = pos[1];
 			Position position = new Position(x, y);
-			
+
 			dirLookUp.put(position, STATUS_STRING[i]);
 			posLookUp.put(STATUS_STRING[i], pos);
 		}
-	}
-
-	/**
-	 * Returns the adjacent states to the position specified
-	 * 
-	 * @param position current
-	 * @return array of adjacent states
-	 */
-	public StateT[] getAdjacentStates(Position position, boolean ourWorld) {
-		final int[][] adjacentLocations = Agent.VALID_MOVES;
-		int length = adjacentLocations.length;
-		StateT[] adjacentStates = new StateT[length];
-		Position newPosition;
-		int i = 0;
-		for(int[] pos : adjacentLocations) {
-			int x = position.getX() + pos[0];
-			int y = position.getY() + pos[1];
-			newPosition = new Position(x, y);
-			if(ourWorld) {
-				if(wumpusWorld.containsKey(newPosition))
-					adjacentStates[i] = wumpusWorld.get(newPosition);
-			} else {
-				if(testWorld.stateExists(newPosition)) {// Should never fail.
-					//adjacentStates[i] = testWorld.getState(newPosition);
-				} else {
-					System.err.println("=== FAIL AT getAdjcentStates when"
-							+" ourWorld = "+ourWorld);
-				}
-			}
-			i += 1;
-		}
-
-		return adjacentStates; 
 	}
 
 	/**
@@ -348,25 +352,69 @@ public class AgentTesting {
 	}
 
 	/**
+	 * Add a state to the agent world
+	 * @param position to that state
+	 * @param state added
+	 * 
+	 * @return true iff already added,
+	 * 		false otherwise
+	 */
+	public boolean addState(Position position, StateT state) {
+		if(knowledgeBase.contains(position)) return false;
+
+		knowledgeBase.put(position, state);
+		return true;
+	}
+
+	/**
 	 * Return the state corresponding to the position
 	 * 
 	 * @param position key to state
 	 * @return state in our world
 	 */
 	public StateT getState(Position position) {
-		return wumpusWorld.get(position);
+		return knowledgeBase.get(position);
 	}
-	
-	private void printWorld(Position position, boolean world) {
-		StateT sta[] = getAdjacentStates(position, world);
-		if(world) {
-			System.out.println("The world wumpusWorld, ie our robots knowledge");
-		} else {
-			System.out.println("The test world from testWorld");
-		}
-		if(sta != null)
-			for(StateT s : sta) {
-				if(s != null) System.out.println(s.toString());
-			}
+
+	/**
+	 * Return the world as our agent knows ut
+	 * 
+	 * @return the world our agent perceived
+	 */
+	public Hashtable<Position, StateT> getAgentWorld() {
+		return knowledgeBase;
+	}
+
+	/**
+	 * Return true if position has been visited
+	 * 
+	 * @param position to be checked
+	 * @return true if position has been visited,
+	 * 		false otherwise
+	 */
+	public boolean isVisited(Position position) {
+		return visited.contains(position);
+	}
+
+	/**
+	 * Return true if position has not yet been explored
+	 * 
+	 * @param position to be explored
+	 * @return true if position not yet explored,
+	 * 		false otherwise
+	 */
+	public boolean notExplored(Position position) {
+		return !isVisited(position);
+	}
+
+	/**
+	 * Return true if position is not a border
+	 * 
+	 * @param position to be checked
+	 * @return true if positions is not border,
+	 * 		false otherwise
+	 */
+	public boolean notBorder(Position position) {
+		return !unwantedStates.contains(position);
 	}
 }
