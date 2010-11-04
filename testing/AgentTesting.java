@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.LinkedList;
+
 /**
  * The AI for the classic and legendary game Wumpus world!
  * 
@@ -55,8 +56,10 @@ public class AgentTesting {
 	private boolean fetchedGold = false;
 
 	public static final int[][] VALID_MOVES = {
-		{1,1}, {1,0}, {1,-1}, {0,-1}, {-1,-1}, {-1,0}, {-1,1}, {0,1} 	
+		{1,0}, {0,-1}, {-1,0}, {0,1}, {1,-1}, {1,1}, {-1,-1}, {-1,1}, 	
 	};
+	
+	public static final int[][] ADJACENT = { {1,0}, {-1,0}, {0,1}, {0,-1} };
 
 	/**
 	 * Entry point
@@ -95,8 +98,8 @@ public class AgentTesting {
 		visited = new HashSet<Position>();
 				
 		wumpusWorld = new Hashtable<Position, StateT>();
-
-		Position current = new Position(0,0, Direction.FORWARD);
+		// TODO add forward direction
+		Position current = new Position(0,0);
 		int cnt = 0;
 		Position t;
 		do {
@@ -105,9 +108,17 @@ public class AgentTesting {
 			t = decideMove(current);
 			previous = current;
 			current = t;
-		} while(true);
+		} while(!fetchedGold);
 	}
 	
+	/**
+	 * Add a state to the agent world
+	 * 
+	 * @param state added
+	 * @param position to that state
+	 * @return true iff already added,
+	 * 		false otherwise
+	 */
 	public boolean addState(StateT state, Position position) {
 		if(wumpusWorld.contains(position)) return false;
 		
@@ -204,15 +215,13 @@ public class AgentTesting {
 
 		Position lastKnownSafePosition = null;
 		
-		
 		int count = 0;
 		Position newPos = null;
 		for(int[] pos : VALID_MOVES) {
 			++count;
 			newPos = current.newPosition(pos[0], pos[1]);
-			Direction dir = dirLookUp.get(newPos);
+			String dir = dirLookUp.get(newPos);
 			newPos.setHeading(dir);
-
 
 			if(!visited.contains(newPos) && !unwantedStates.contains(newPos)) {
 				state = percept(newPos);
