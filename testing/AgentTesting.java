@@ -1,21 +1,11 @@
 import java.util.HashSet;
 import java.util.Hashtable;
-<<<<<<< variant A
->>>>>>> variant B
-<<<<<<< HEAD:testing/AgentTesting.java
 import java.util.LinkedList;
 
-=======
-======= end
+
 import java.util.Queue;
 
-import robot.Status;
-<<<<<<< variant A
->>>>>>> variant B
->>>>>>> dd64d36b44114795daec44925fe12865cc908ad3:testing/AgentTesting.java
-======= end
-/**
- * The AI for the classic and legendary game Wumpus world!
+ /** The AI for the classic and legendary game Wumpus world!
  * 
  * The AI starts with percieving to see if anything new about
  * the world can be noticed. If so, it takes that new
@@ -33,32 +23,13 @@ import robot.Status;
 public class AgentTesting {
 	public static final boolean DEBUG = true;
 	
-<<<<<<< HEAD
-	private final String STATUS_STRING[] = Status.STRINGS;
+	//private final String STATUS_STRING[] = Status.STRINGS;
 	
-	public static final byte MASK_B[] = {0,0,1,0,0};
-	public static final byte MASK_S[] = {0,0,0,1,0};
-	public static final byte MASK_G[] = {0,0,0,0,1};
-	public static final byte MASK_N[] = {1,0,0,0,0};
-	public static final byte MASK_O[] = {0,1,0,0,0};
-
-	private TestWorld testWorld;
-
-	private Queue<Position> queue;
-	private Queue<Position> path;
-	private Hashtable visited;
-	private Hashtable adjacentToBase;
-	private Hashtable unwantedStates;
-	
-	private Hashtable dirLookUp;
-	private Hashtable posLookUp;
-	private Hashtable statusLookUp;
-	private Hashtable wumpusWorld;
-=======
 	private final String STATUS_STRING[] = {
 			"DUMMY :D", "BORDER", "NOTHING", "BREEZE", "STENCH", "GLITTER", 
 			"STENCH_BREEZE", "GLITTER_BREEZE", "GLITTER_STENCH"
 			, "STENCH_GLITTER_BREEZE" };
+	
 	// boolean states[] = {border, breeze, stench, glitter, ok};
 	public static final boolean MASK_N[] = {false, false, false, false, true};
 	public static final boolean MASK_O[] = {true, false, false, false, false};	
@@ -73,14 +44,13 @@ public class AgentTesting {
 
 	private TestWorld testWorld;
 
-	private HashSet<Position> visited;
-	private HashSet<Position> adjacentToBase;
-	private HashSet<Position> unwantedStates;
+	private Hashtable<Position, Integer> visited;
+	private Hashtable<Position, Integer> adjacentToBase;
+	private Hashtable<Position, Integer> unwantedStates;
 	
 	private Hashtable<Position, String> dirLookUp;
 	private Hashtable<String, int[]> posLookUp;
 	private Hashtable<Position, StateT> wumpusWorld;
->>>>>>> c54684ebe05f35c4632752dd08a7411bbe8d704d
 	
 	private KnowledgeBaseTest kb;
 	private Position current, previous;
@@ -88,17 +58,11 @@ public class AgentTesting {
 	private boolean fetchedGold = false;
 
 	public static final int[][] VALID_MOVES = {
-<<<<<<< variant A
-		{1,1}, {1,0}, {1,-1}, {0,-1}, {-1,-1}, {-1,0}, {-1,1}, {0,1} 	
->>>>>>> variant B
 		{1,0}, {0,-1}, {-1,0}, {0,1}, {1,-1}, {1,1}, {-1,-1}, {-1,1}, 	
-======= end
 	};
-<<<<<<< variant A
->>>>>>> variant B
 	
 	public static final int[][] ADJACENT = { {1,0}, {-1,0}, {0,1}, {0,-1} };
-======= end
+
 
 	/**
 	 * Entry point
@@ -132,25 +96,16 @@ public class AgentTesting {
 		setUpTables();
 
 
-		adjacentToBase = new Hashtable();
-		unwantedStates = new Hashtable();
-		visited = new Hashtable();
+		adjacentToBase = new Hashtable<Position, Integer>();
+		unwantedStates = new Hashtable<Position, Integer>();
+		visited = new Hashtable<Position, Integer>();
 				
-<<<<<<< variant A
->>>>>>> variant B
-<<<<<<< HEAD:testing/AgentTesting.java
 		wumpusWorld = new Hashtable<Position, StateT>();
 		// TODO add forward direction
 		Position current = new Position(0,0);
-=======
-======= end
-		wumpusWorld = new Hashtable();
 
-		Position current = new Position(0,0, Direction.FORWARD);
-<<<<<<< variant A
->>>>>>> variant B
->>>>>>> dd64d36b44114795daec44925fe12865cc908ad3:testing/AgentTesting.java
-======= end
+		wumpusWorld = new Hashtable<Position, StateT>();
+		
 		int cnt = 0;
 		Position t;
 		do {
@@ -158,15 +113,10 @@ public class AgentTesting {
 			t = decideMove(current);
 			previous = current;
 			current = t;
-<<<<<<< variant A
-		} while(true);
->>>>>>> variant B
 		} while(!fetchedGold);
-======= end
+
 	}
 	
-<<<<<<< variant A
->>>>>>> variant B
 	/**
 	 * Add a state to the agent world
 	 * 
@@ -175,7 +125,6 @@ public class AgentTesting {
 	 * @return true iff already added,
 	 * 		false otherwise
 	 */
-======= end
 	public boolean addState(StateT state, Position position) {
 		if(wumpusWorld.contains(position)) return false;
 		
@@ -196,7 +145,7 @@ public class AgentTesting {
 		updateStates(state, position, value, true);
 		
 		wumpusWorld.put(position, state);
-		visited.add(position);
+		visited.put(position, 0);
 
 		return state;
 	}
@@ -276,18 +225,15 @@ public class AgentTesting {
 		for(int[] pos : VALID_MOVES) {
 			++count;
 			newPos = current.newPosition(pos[0], pos[1]);
-<<<<<<< variant A
-			Direction dir = dirLookUp.get(newPos);
->>>>>>> variant B
+			
 			String dir = dirLookUp.get(newPos);
-======= end
 			newPos.setHeading(dir);
 
 			if(!visited.contains(newPos) && !unwantedStates.contains(newPos)) {
 				state = percept(newPos);
-				adjacentToBase.add(newPos);
+				adjacentToBase.put(newPos, 0);
 				
-				System.out.printf("  %d. %s status %s\n",count,newPos.toString(),getStateStatus(state));
+				System.out.printf("  %d. %s status %s\n",count,newPos.toString(),newPos.getHeading());
 
 				infer(state, newPos);
 
@@ -368,7 +314,7 @@ public class AgentTesting {
 					adjacentStates[i] = wumpusWorld.get(newPosition);
 			} else {
 				if(testWorld.stateExists(newPosition)) {// Should never fail.
-					adjacentStates[i] = testWorld.getState(newPosition);
+					//adjacentStates[i] = testWorld.getState(newPosition);
 				} else {
 					System.err.println("=== FAIL AT getAdjcentStates when"
 							+" ourWorld = "+ourWorld);
