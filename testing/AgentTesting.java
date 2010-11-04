@@ -1,10 +1,19 @@
-import java.util.EnumMap;
-import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
+<<<<<<< variant A
+>>>>>>> variant B
+<<<<<<< HEAD:testing/AgentTesting.java
 import java.util.LinkedList;
 
+=======
+======= end
+import java.util.Queue;
+
+import robot.Status;
+<<<<<<< variant A
+>>>>>>> variant B
+>>>>>>> dd64d36b44114795daec44925fe12865cc908ad3:testing/AgentTesting.java
+======= end
 /**
  * The AI for the classic and legendary game Wumpus world!
  * 
@@ -24,6 +33,28 @@ import java.util.LinkedList;
 public class AgentTesting {
 	public static final boolean DEBUG = true;
 	
+<<<<<<< HEAD
+	private final String STATUS_STRING[] = Status.STRINGS;
+	
+	public static final byte MASK_B[] = {0,0,1,0,0};
+	public static final byte MASK_S[] = {0,0,0,1,0};
+	public static final byte MASK_G[] = {0,0,0,0,1};
+	public static final byte MASK_N[] = {1,0,0,0,0};
+	public static final byte MASK_O[] = {0,1,0,0,0};
+
+	private TestWorld testWorld;
+
+	private Queue<Position> queue;
+	private Queue<Position> path;
+	private Hashtable visited;
+	private Hashtable adjacentToBase;
+	private Hashtable unwantedStates;
+	
+	private Hashtable dirLookUp;
+	private Hashtable posLookUp;
+	private Hashtable statusLookUp;
+	private Hashtable wumpusWorld;
+=======
 	private final String STATUS_STRING[] = {
 			"DUMMY :D", "BORDER", "NOTHING", "BREEZE", "STENCH", "GLITTER", 
 			"STENCH_BREEZE", "GLITTER_BREEZE", "GLITTER_STENCH"
@@ -49,6 +80,7 @@ public class AgentTesting {
 	private Hashtable<Position, String> dirLookUp;
 	private Hashtable<String, int[]> posLookUp;
 	private Hashtable<Position, StateT> wumpusWorld;
+>>>>>>> c54684ebe05f35c4632752dd08a7411bbe8d704d
 	
 	private KnowledgeBaseTest kb;
 	private Position current, previous;
@@ -56,10 +88,17 @@ public class AgentTesting {
 	private boolean fetchedGold = false;
 
 	public static final int[][] VALID_MOVES = {
+<<<<<<< variant A
+		{1,1}, {1,0}, {1,-1}, {0,-1}, {-1,-1}, {-1,0}, {-1,1}, {0,1} 	
+>>>>>>> variant B
 		{1,0}, {0,-1}, {-1,0}, {0,1}, {1,-1}, {1,1}, {-1,-1}, {-1,1}, 	
+======= end
 	};
+<<<<<<< variant A
+>>>>>>> variant B
 	
 	public static final int[][] ADJACENT = { {1,0}, {-1,0}, {0,1}, {0,-1} };
+======= end
 
 	/**
 	 * Entry point
@@ -93,24 +132,41 @@ public class AgentTesting {
 		setUpTables();
 
 
-		adjacentToBase = new HashSet<Position>(8);
-		unwantedStates = new HashSet<Position>();
-		visited = new HashSet<Position>();
+		adjacentToBase = new Hashtable();
+		unwantedStates = new Hashtable();
+		visited = new Hashtable();
 				
+<<<<<<< variant A
+>>>>>>> variant B
+<<<<<<< HEAD:testing/AgentTesting.java
 		wumpusWorld = new Hashtable<Position, StateT>();
 		// TODO add forward direction
 		Position current = new Position(0,0);
+=======
+======= end
+		wumpusWorld = new Hashtable();
+
+		Position current = new Position(0,0, Direction.FORWARD);
+<<<<<<< variant A
+>>>>>>> variant B
+>>>>>>> dd64d36b44114795daec44925fe12865cc908ad3:testing/AgentTesting.java
+======= end
 		int cnt = 0;
 		Position t;
 		do {
-
-			System.out.printf("\ndecideMove called %d times\n\n",++cnt);
+			System.out.println("\ndecideMove called " + (++cnt) + " times\n\n");
 			t = decideMove(current);
 			previous = current;
 			current = t;
+<<<<<<< variant A
+		} while(true);
+>>>>>>> variant B
 		} while(!fetchedGold);
+======= end
 	}
 	
+<<<<<<< variant A
+>>>>>>> variant B
 	/**
 	 * Add a state to the agent world
 	 * 
@@ -119,6 +175,7 @@ public class AgentTesting {
 	 * @return true iff already added,
 	 * 		false otherwise
 	 */
+======= end
 	public boolean addState(StateT state, Position position) {
 		if(wumpusWorld.contains(position)) return false;
 		
@@ -127,7 +184,6 @@ public class AgentTesting {
 	}
 
 	private StateT percept(Position current) {
-
 		// Make the new position for this state
 		Position position = current.newPosition();
 		
@@ -220,7 +276,11 @@ public class AgentTesting {
 		for(int[] pos : VALID_MOVES) {
 			++count;
 			newPos = current.newPosition(pos[0], pos[1]);
+<<<<<<< variant A
+			Direction dir = dirLookUp.get(newPos);
+>>>>>>> variant B
 			String dir = dirLookUp.get(newPos);
+======= end
 			newPos.setHeading(dir);
 
 			if(!visited.contains(newPos) && !unwantedStates.contains(newPos)) {
