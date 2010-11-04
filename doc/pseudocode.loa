@@ -1,0 +1,4 @@
+\contentsline {algorithm}{\numberline {1}{\ignorespaces Search Function - \textbf {explore}()}}{2}
+\contentsline {algorithm}{\numberline {2}{\ignorespaces Inference Function - \textbf {infer}()}}{3}
+\contentsline {algorithm}{\numberline {3}{\ignorespaces Safety Evaluation Function - \textbf {isSafe}()}}{4}
+\contentsline {algorithm}{\numberline {4}{\ignorespaces Escaping Function - \textbf {escape}()}}{4}

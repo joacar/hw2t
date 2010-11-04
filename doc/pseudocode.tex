@@ -13,6 +13,8 @@
 
 Below are the algorithms that make up the AI for our agent. We chose to use a model-based agent, as a purely reflex based agent would not take advantage of the possibilities of logical inference in the world, and the lack of information about the proximity of the gold would have made a goal-based agent useless.
 
+The agent only moves to tiles that it knows are safe, and that it has not visited previously. If the agent ever finds itself in a position in which it cannot move to a safe, unexplored tile, it will return to the origin and start over. This means that we reduce the risk of our agent trapping itself in a region of the map, but also that our agent refuses to accept the possibility that there is no way of reaching the gold (if any exists). Our AI will \textit{never give up}.  
+
 \listofalgorithms 
 
 \begin{algorithm}
@@ -49,6 +51,7 @@ Below are the algorithms that make up the AI for our agent. We chose to use a mo
 \STATE \textbf{explored}(newX,newY) $\leftarrow$ $true$
 \IF{\textbf{isGlittery}(state)}
 \STATE \textbf{pickUpGold}
+\STATE foundTheGold $\leftarrow$ $true$
 \STATE \textbf{escape}(newX,newY)
 \ENDIF
 \IF{m is the last Move in MOVES $\wedge$ $\lnot$\textbf{isBlack}(state)}
@@ -121,12 +124,18 @@ Below are the algorithms that make up the AI for our agent. We chose to use a mo
 \begin{algorithmic}[1]
 \REQUIRE a KnowledgeBase
 \REQUIRE a startingPosition
+\REQUIRE whether we foundTheGold
 \STATE currentPosition $\leftarrow$ startingPosition
 \REPEAT
 \STATE nextPosition $\leftarrow$ a safe neighbour of currentPosition that minimises the straight line distance to (0,0)
 \STATE \textbf{moveTo}(nextPosition)
 \STATE currentPosition $\leftarrow$ nextPosition
 \UNTIL{currentPosition = (0,0)} 
+\IF{$\lnot$foundTheGold}
+\STATE \textbf{clear}(KnowledgeBase)
+\STATE \textbf{clear}(explored)
+\STATE \textbf{explore}
+\ENDIF
 \end{algorithmic}
 \end{algorithm}
 
