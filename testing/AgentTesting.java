@@ -1,9 +1,8 @@
-import java.util.HashSet;
+import java.io.BufferedReader;
+import java.io.IOError;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Hashtable;
-import java.util.LinkedList;
-
-
-import java.util.Queue;
 
  /** The AI for the classic and legendary game Wumpus world!
  * 
@@ -43,7 +42,7 @@ public class AgentTesting {
 
 
 	private TestWorld testWorld;
-
+	
 	private Hashtable<Position, Integer> visited;
 	private Hashtable<Position, Integer> adjacentToBase;
 	private Hashtable<Position, Integer> unwantedStates;
@@ -78,6 +77,13 @@ public class AgentTesting {
 		new AgentTesting(args[0]);
 	}
 
+	public AgentTesting(TestWorld testWorld) {
+		this.testWorld = testWorld;
+		
+		initialize();
+		
+		
+	}
 	/**
 	 * Constructor taking a input file
 	 * 
@@ -87,20 +93,8 @@ public class AgentTesting {
 		// Load the test world with the input fule
 		testWorld = new TestWorld(inputFile);
 
-		// Load the knowledge base
-		kb = new KnowledgeBaseTest(this);
-
-		// Set up a tables
-		dirLookUp = new Hashtable<Position, String>(10);
-		posLookUp = new Hashtable<String, int[]>(10);
-		setUpTables();
-
-
-		adjacentToBase = new Hashtable<Position, Integer>();
-		unwantedStates = new Hashtable<Position, Integer>();
-		visited = new Hashtable<Position, Integer>();
-				
-		wumpusWorld = new Hashtable<Position, StateT>();
+		initialize();
+		
 		// TODO add forward direction
 		Position current = new Position(0,0);
 
@@ -115,6 +109,23 @@ public class AgentTesting {
 			current = t;
 		} while(!fetchedGold);
 
+	}
+	
+	private void initialize() {
+		// Load the knowledge base
+		kb = new KnowledgeBaseTest(this);
+
+		// Set up a tables
+		dirLookUp = new Hashtable<Position, String>(10);
+		posLookUp = new Hashtable<String, int[]>(10);
+		setUpTables();
+
+
+		adjacentToBase = new Hashtable<Position, Integer>();
+		unwantedStates = new Hashtable<Position, Integer>();
+		visited = new Hashtable<Position, Integer>();
+				
+		wumpusWorld = new Hashtable<Position, StateT>();	
 	}
 	
 	/**
@@ -214,7 +225,7 @@ public class AgentTesting {
 		}
 	}
 
-	private Position decideMove(Position current) {
+	public Position decideMove(Position current) {
 		StateT state = percept(current);
 		infer(state, current);
 
