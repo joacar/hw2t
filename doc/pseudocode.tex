@@ -23,9 +23,8 @@ The agent only moves to tiles that it knows are safe, and that it has not visite
 \begin{algorithmic}[1]
 \REQUIRE CROSS MOVES $\leftarrow$ [(1,0),(-1,0),(0,1),(0,-1)]
 \REQUIRE DIAGONAL MOVES $\leftarrow$ [(1,1),(-1,-1),(1,-1),(-1,1)]
-\REQUIRE KnowledgeBase $\leftarrow$ $\emptyset$
-\REQUIRE explored $\leftarrow$ $\emptyset$
-
+\STATE KnowledgeBase $\leftarrow$ $\emptyset$
+\STATE explored $\leftarrow$ $\emptyset$
 \STATE origin $\leftarrow$ (0,0)
 \STATE base $\leftarrow$ origin
 
