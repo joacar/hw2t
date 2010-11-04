@@ -27,26 +27,23 @@ We ensure that we only move to tiles we have some knowledge about by making cros
 \REQUIRE DIAGONAL MOVES $\leftarrow$ [(1,1),(-1,-1),(1,-1),(-1,1)]
 \STATE KnowledgeBase $\leftarrow$ $\emptyset$
 \STATE explored $\leftarrow$ $\emptyset$
+\STATE
 \STATE origin $\leftarrow$ (0,0)
+\STATE origin state $\leftarrow$ \textbf{perceive}
+\STATE KnowledgeBase.\textbf{put}(origin state)
+\STATE \textbf{infer}(origin)
+\STATE \textbf{explored}(origin.X,origin.Y) $\leftarrow$ $true$
 \STATE base $\leftarrow$ origin
-
+\STATE
 \LOOP
-\IF{\textbf{explored}(base.X,base.Y)}
-\STATE \textbf{escape}(base.X,base.Y)
-\ELSE 
-\STATE base state $\leftarrow$ \textbf{perceive}
-\STATE KnowledgeBase.\textbf{put}(base state)
-\STATE \textbf{infer}(base)
-\STATE \textbf{explored}(base.X,base.Y) $\leftarrow$ $true$
-\STATE 
 \STATE MOVES $\leftarrow$ CROSS MOVES $\cup$ \textbf{shuffle}(DIAGONAL MOVES)
-
 \FORALL{Move m in MOVES}
 \STATE newX $\leftarrow$ base.x $+$ m.x 
 \STATE newY $\leftarrow$ base.y $+$ m.y
-
+\STATE movesMade $\leftarrow$ 0
 \IF{\textbf{isSafe}(newX,newY) $\wedge$  $\lnot$ \textbf{explored}(newX,newY)}
 \STATE \textbf{moveTo}(newX,newY)
+\STATE movesMade $\leftarrow$ movesMade + 1
 \STATE state $\leftarrow$ \textbf{perceive}
 \STATE KnowledgeBase.\textbf{put}(state)
 \STATE \textbf{infer}(state)
@@ -56,15 +53,16 @@ We ensure that we only move to tiles we have some knowledge about by making cros
 \STATE foundTheGold $\leftarrow$ $true$
 \STATE \textbf{escape}(newX,newY)
 \ENDIF
-\IF{m is the last safe Move in MOVES $\wedge$ $\lnot$\textbf{isBlack}(state)}
-\STATE base $\leftarrow$ (newX,newY)
-\ELSE
+\IF{$\lnot$\textbf{isBlack}(state)}
+\STATE nextBase $\leftarrow$ (newX,newY)
+\ENDIF
 \STATE \textbf{moveTo}(base.x,base.y)
 \ENDIF
-\ENDIF
-
 \ENDFOR
+\IF{movesMade = 0}
+\STATE \textbf{escape}(base.x,base.y)
 \ENDIF
+\STATE base $\leftarrow$ nextBase
 \ENDLOOP
 \end{algorithmic}
 \end{algorithm}
@@ -112,6 +110,9 @@ We ensure that we only move to tiles we have some knowledge about by making cros
 \REQUIRE a position (x,y) to evaluate
 \REQUIRE a KnowledgeBase
 \STATE state $\leftarrow$ KnowledgeBase.\textbf{get}(x,y)
+\IF{\textbf{isBlack}(state)}
+\RETURN $false$
+\ENDIF
 \IF{\textbf{isEmpty}(state) $\vee$ (state.pitPossibility = 0 $\wedge$ state.wumpusPossibility = 0)}
 \RETURN $true$
 \ELSE
