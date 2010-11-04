@@ -1,10 +1,12 @@
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.Scanner;
 
 public class TestWorld {
-	private HashMap<Position,Integer> testWorld;
+	private Hashtable<Position,Integer> testWorld;
 	private final int[] START = new int[2];
 	
 	public static void main(String[] args){
@@ -13,9 +15,10 @@ public class TestWorld {
 	}
 	
 	public TestWorld(String inputFile){
-		testWorld = new HashMap<Position,Integer>();
+		testWorld = new Hashtable<Position,Integer>();
 		
-		String path = "../input/" + inputFile;
+		//String path = "../input/" + inputFile;
+		String path = "" + inputFile;
 		Scanner s = null;
 		try {
 			s = new Scanner((new File(path)));
@@ -45,13 +48,7 @@ public class TestWorld {
 		return testWorld.get(position);
 	}
 	
-	public StateT getState(Position position) {
-		StateT state = new StateT(position, false);
-		state.setValue(getPercept(position));
-		return state;
-	}
-	
-	public HashMap<Position, Integer> getTestWorld() {
+	public Hashtable<Position, Integer> getTestWorld() {
 		return testWorld;
 	}
 	

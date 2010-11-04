@@ -35,9 +35,9 @@ public class GenerateWumpusWorld {
 	private static BufferedWriter bw;
 
 	private int rows, cols, x, y;
-	private String[][] wumpusWorldS;
+	private String[][] wumpusWorld;
 	private HashMap<String, Integer> table;
-	
+
 	/**
 	 * Entry point. 
 	 * 
@@ -48,10 +48,7 @@ public class GenerateWumpusWorld {
 			System.out.println("Usage \t java GenerateWumpusWorld <file_name>");
 			System.exit(0);
 		}
-		
-		inputFile = args[0];
-		outputFile = inputFile.replace(".txt", "_converted.txt");
-		new GenerateWumpusWorld(inputFile);
+		new GenerateWumpusWorld(args[0]);
 	}
 
 	/**
@@ -60,6 +57,8 @@ public class GenerateWumpusWorld {
 	 * @param inputFile name of file
 	 */
 	public GenerateWumpusWorld(String inputFile) {
+		this.inputFile = inputFile;
+		outputFile = inputFile.replace(".txt", "_converted.txt");
 		table = new HashMap<String, Integer>();
 		setUpTable();
 		
@@ -81,7 +80,7 @@ public class GenerateWumpusWorld {
 		read(sc);
 		//printTransformed();
 		//printAbsolute();
-		printRelative();
+		//printRelative();
 		writeTransformed();
 		finished();
 	}
@@ -102,13 +101,13 @@ public class GenerateWumpusWorld {
 			y = sc.nextInt() + 1;
 
 			// Initialize the new world and create border
-			wumpusWorldS = new String[rows][cols];
-			for(int i = 0; i < cols; i++) wumpusWorldS[0][i] = wumpusWorldS[rows-1][i] = "X";
-			for(int j = 0; j < rows; j++) wumpusWorldS[j][0] = wumpusWorldS[j][cols-1] = "X";
+			wumpusWorld = new String[rows][cols];
+			for(int i = 0; i < cols; i++) wumpusWorld[0][i] = wumpusWorld[rows-1][i] = "X";
+			for(int j = 0; j < rows; j++) wumpusWorld[j][0] = wumpusWorld[j][cols-1] = "X";
 			// Read in the actual world
 			for(int i = 1; i < rows-1; i++)
 				for(int j = 1; j < cols-1; j++) 
-					wumpusWorldS[j][i] = sc.next();
+					wumpusWorld[j][i] = sc.next();
 
 		} catch(NumberFormatException e) {
 			System.err.println("Incorrectly formated input data!"+
@@ -123,7 +122,7 @@ public class GenerateWumpusWorld {
 		System.out.printf("Start is [%d,%d]\n",x,y);
 		for(int i = 0; i < rows; i++) {
 			for(int j = 0; j < cols; j++) { 
-				System.out.printf("%s[%d,%d] ",wumpusWorldS[j][i], j ,i);
+				System.out.printf("%s[%d,%d] ",wumpusWorld[j][i], j ,i);
 			}
 			System.out.printf("\n");
 		}
@@ -136,7 +135,7 @@ public class GenerateWumpusWorld {
 		System.out.printf("Start is [%d,%d]\n",0,0);
 		for(int i = 0; i < rows; i++) {
 			for(int j = 0; j < cols; j++) { 
-				System.out.printf("%s[%d,%d] ",wumpusWorldS[j][i], (j-x) ,(i-y));
+				System.out.printf("%s[%d,%d] ",wumpusWorld[j][i], (j-x) ,(i-y));
 			}
 			System.out.printf("\n");
 		}
@@ -150,7 +149,7 @@ public class GenerateWumpusWorld {
 		System.out.printf("%d %d\n",x,y);
 		for(int i = 0; i < rows; i++) {
 			for(int j = 0; j < cols; j++) { 
-				System.out.printf("%d %d %d\n",(j-x),(i-y) ,table.get(wumpusWorldS[j][i]));
+				System.out.printf("%d %d %d\n",(j-x),(i-y) ,table.get(wumpusWorld[j][i]));
 			}
 			//System.out.printf("\n");
 		}
@@ -195,7 +194,7 @@ public class GenerateWumpusWorld {
 		try {
 			for(int i = 0; i < rows; i++) {
 				for(int j = 0; j < cols; j++) {
-					s = wumpusWorldS[j][i];
+					s = wumpusWorld[j][i];
 					bw.write(s+" ");
 				}
 				bw.write("\n");
@@ -234,7 +233,7 @@ public class GenerateWumpusWorld {
 			bw.flush();
 			for(int i = 0; i < rows; i++) {
 				for(int j = 0; j < cols; j++) {
-					s = (j-x)+" "+(i-y)+" "+table.get(wumpusWorldS[j][i]);
+					s = (j-x)+" "+(i-y)+" "+table.get(wumpusWorld[j][i]);
 					bw.write(s+"\n");
 				}
 			}
@@ -250,4 +249,10 @@ public class GenerateWumpusWorld {
 		System.out.println("Have successfully converted "+inputFile+" to "+
 				outputFile+" containing testdata formatted for wumpus world");
 	}
+	
+	public String[][] getWumpusWorld() {
+		return wumpusWorld;
+	}
+	
+	
 }

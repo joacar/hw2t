@@ -16,9 +16,10 @@ public class KnowledgeBaseTest {
 	
 	/**
 	 * Checks if two squares are adjacent or not. 
-	 * A square [i,j] us adjacent to [x,y] if, for
+	 * A square [i,j] is adjacent to [x,y] if, for
 	 * all x,y,i,j, it holds that |x-i| == 1
-	 * or |y-j| == 1
+	 * xor |y-j| == 1. The xor states the they are
+	 * "purely" adjacent.
 	 * 
 	 * @param pos1 Position
 	 * @param pos2 Position
@@ -41,14 +42,16 @@ public class KnowledgeBaseTest {
 	 * 
 	 * @param state State currently in
 	 */
-	public void setOk(Position position) {
-		for(int[] pos : Agent.VALID_MOVES) {
+	public void setOk(StateT state) {
+		Position position = state.position;
+		
+		for(int[] pos : AgentTesting.ADJACENT) {
 			Position newPosition = position.newPosition(pos[0], pos[1]);
+			StateT adjacent = new StateT(newPosition, false);
 			
-			if(adjacent(position, newPosition) && !newPosition.equals(position)) {
-				StateT state = new StateT(newPosition, false);
-				agent.addState(state, newPosition);
-				state.and(AgentTesting.MASK_N);
+			if(!agent.explored(newPosition)) {
+				adjacent.setOk();
+				agent.addState(newPosition, adjacent);
 			}
 		}
 	}
@@ -65,17 +68,29 @@ public class KnowledgeBaseTest {
 	 * there _might_ be a pit there and hence pit "possibility" 
 	 * increases with one.
 	 * 
-	 * @param position current
+	 * @param state current
 	 */
-	public void setPitPossibility(Position position) {
-		for(int[] pos : Agent.VALID_MOVES) {
-			Position newPosition = position.newPosition(pos[0], pos[1]);
-			StateT state = new StateT(newPosition, false);
+	public void setPitPossibility(StateT state) {
+		Position position = state.position, newPosition;
+		StateT adjacent = null;
+		
+		for(int[] pos : AgentTesting.ADJACENT) {
+			newPosition = position.newPosition(pos[0], pos[1]);
 			
-			if(!state.isOk() && adjacent(position, state.position)
-					&& !newPosition.equals(position)) {
-				state.pitP += 1;			// Increase the chance that there is a pit
-			}
+			/*
+			 * If the adjacent state is not in our knowledge
+			 * base, create a new state for the position
+			 */
+			adjacent = agent.getState(newPosition);
+			if(adjacent == null ) adjacent = new StateT(newPosition, false);
+			
+			if(!agent.explored(newPosition)) {
+				adjacent.incrementPit();
+				adjacent.setPit();
+				agent.addState(newPosition, adjacent);
+				print(adjacent);
+				
+			} 
 		}
 	}
 
@@ -89,19 +104,22 @@ public class KnowledgeBaseTest {
 	 * 
 	 * We cant for sure conclude that it is the wumpus home, we now that
 	 * it _might_  be and hence Wumpus "possibility" increases with one.
-	 * 
-	 * @param position current
+	 * @param state TODO
 	 */
-	public void setWumpusPossibility(Position position) {
-		for(int[] pos : Agent.VALID_MOVES) {
-			Position newPosition = position.newPosition(pos[0], pos[1]);
-			StateT state = new StateT(newPosition, false);
+	public void setWumpusPossibility(StateT state) {
+		Position position = state.position, newPosition;
+		StateT adjacent = null;
+		
+		for(int[] pos : AgentTesting.ADJACENT) {
+			newPosition = position.newPosition(pos[0], pos[1]);
+			adjacent = new StateT(newPosition, false);
 			
-			if(!state.isOk() && adjacent(position, state.position)
-					&& !newPosition.equals(position)) {
-				state.pitP += 1;		// Increase the chance that there is a pit
-				//state.or(mask?)
-			}
+			if(!agent.explored(newPosition)) {
+				adjacent.incrementWumpus();
+				adjacent.setWumpus();
+				agent.addState(newPosition, adjacent);
+				print(adjacent);
+			} 
 		}
 	}
 	
@@ -114,11 +132,11 @@ public class KnowledgeBaseTest {
 	public boolean setPit(Position position) {
 		int count = 0;	// Counts number of adjacent states
 		
-		for(int[] pos : Agent.VALID_MOVES) {
+		for(int[] pos : AgentTesting.ADJACENT) {
 			Position newPosition = position.newPosition(pos[0], pos[1]);
 			StateT state = new StateT(newPosition, false);
 			
-			if(state.visited && adjacent(position, state.position) && state.pitP > 0) {
+			if(agent.explored(newPosition) && adjacent(position, state.position) && state.getPitPossibility() > 0) {
 				count += 1;
 			}	
 		}
@@ -136,16 +154,20 @@ public class KnowledgeBaseTest {
 	public boolean setWumpus(Position position) {
 		int count = 0;	// Counts number of adjacent states
 		
-		for(int[] pos : Agent.VALID_MOVES) {
+		for(int[] pos : AgentTesting.ADJACENT) {
 			Position newPosition = position.newPosition(pos[0], pos[1]);
 			StateT state = new StateT(newPosition, false);
 			
-			if(state.visited && adjacent(position, state.position) && state.wumpusP > 0) {
+			if(agent.explored(newPosition) && adjacent(position, state.position) && state.getWumpusPossibility() > 0) {
 				count += 1;
 			}	
 		}
 		
 		if(count > 1) return true;
 		return false;
+	}
+	
+	private void print(StateT state) {
+		if(AgentTesting.DEBUG) System.out.printf("\tInfered @ %s\n",state.toString());
 	}
 }

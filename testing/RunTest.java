@@ -5,15 +5,14 @@ import java.util.Hashtable;
 import java.util.Set;
 
 public class RunTest {
-	private AgentTesting agent;
-	private TestWorld testWorld;
+	public TestWorld testWorld;
 	private GenerateWumpusWorld gww;
 	
 	private String wumpusWorld[][];
 	private String agentMatrix[][];
 	
 	private Hashtable<Position, Integer> testWorldTable;
-	private Hashtable<Position, StateT> agentWorld;
+	public Hashtable<Position, StateT> agentWorld;
 	private Hashtable<Integer, String> table;
 	
 	private String inputFile = null;
@@ -41,19 +40,15 @@ public class RunTest {
 		testWorld = new TestWorld(PATH+inputFile);
 		testWorldTable = testWorld.getTestWorld();
 		start = testWorld.getStartPosition();
-		
-		agent = new AgentTesting(testWorld);
-		agentWorld = agent.getAgentWorld();
-		
+				
 		initialize();
 
-		BufferedReader br = null;
+		/*BufferedReader br = null;
 		String line = null;
 		Position next = null, prev = null, cur = null;;
 		try {
 			 br = new BufferedReader(new InputStreamReader(System.in));
 			 System.out.printf("\nCommand options is next or stop\n");
-			 cur = new Position(0,0);
 			 do {
 				 System.out.printf("Move or stop, make your" +
 				 		" choice: " );
@@ -61,13 +56,10 @@ public class RunTest {
 				 if(line.equals("next")) {
 					 next = agent.decideMove(cur);
 					 upDateAgentMatrix(cur);
+					 upDateAgentLocation(cur, prev);
 					 print(cur);
-					 // This logic should not be here
-					 if(next == null) {
-						 cur = prev;
-					 } else {
-						 cur = next;
-					 }
+					 prev = cur;
+					 cur = next;
 				 }
 				 if(line.equals("stop")) {
 					 System.exit(0);
@@ -77,33 +69,33 @@ public class RunTest {
 			System.err.println("Error "+e.getMessage());
 		} catch(Exception e) {
 			System.err.println("Error "+e.getMessage());
-		}
+			e.printStackTrace();
+		}*/
 	}
 	
-	private void upDateAgentMatrix(Position position) {
-		System.out.println("RunTest.upDateAgentMatrix()");
-		StateT state = agent.getState(position);
+	public void upDateAgentMatrix(StateT state) {
 		
-		int value = state.getValue();
-		int x = position.getX()+start[0];
-		int y = position.getY()+start[1];
-		System.out.printf("Current position is [%d,%d]\n",x,y);
-		agentMatrix[x][y] = "R";
-		
-		Set<Position> set = agentWorld.keySet();
+		int x = state.position.getX()+start[0];
+		int y = state.position.getY()+start[1];
+		agentMatrix[x][y] = state.getStatus();
+
+		Set<Position> set = AgentTesting.knowledgeBase.keySet();
+		System.out.printf("[%d,%d] SHOULD BE EXPLORED\n",x-start[0],y-start[1]);
 		for(Position pos : set) {
 			x = pos.getX()+start[0]; y = pos.getY()+start[1];
-			state = agent.getState(pos);
-			value = state.getValue();
-			
-			agentMatrix[x][y] = table.get(value);
+			System.out.printf("[%d,%d] SHOULD BE IN KNOWLEDGE BASE\n",x-start[0],y-start[1]);
+			StateT adjacent = AgentTesting.knowledgeBase.get(new Position(x-start[0],y-start[1]));
+			agentMatrix[x][y] = adjacent.getStatus();
 		}
 	}
 	
-	private void upDateAgentLocation(Position position) {
-		int x = position.getX()+start[0];
-		int y = position.getY()+start[1];
+	public void upDateAgentLocation(Position position, Position previous) {
+		if(previous != null) { 
+			int xP = previous.getX()+start[0], yP = previous.getY()+start[1];
+			agentMatrix[xP][yP] = "0";
+		}
 		
+		int x = position.getX()+start[0], y = position.getY()+start[1];
 		agentMatrix[x][y] = "R";
 	}
 	
@@ -121,13 +113,11 @@ public class RunTest {
 		table.put(5, "BG");
 		table.put(6, "SG");
 		table.put(7, "BSG");
-		
-		System.out.printf("Start location [%d,%d]",start[0],start[1]);
-		
+				
 		agentMatrix = new String[wumpusWorld.length][wumpusWorld.length];
 		for(int i = 0; i < wumpusWorld.length; i++) {
 			for(int j = 0; j < wumpusWorld[0].length; j++) {
-				if(start[0] == i && start[1] == j) {
+				if(start[0] == j && start[1] == i) {
 					agentMatrix[j][i] = "R";
 				} else {
 					agentMatrix[j][i] = "0";
@@ -136,18 +126,20 @@ public class RunTest {
 		}
 	}
 	
-	private void print(Position position) {
-		System.out.printf("Current position is %s\n", position);
+	public void print(Position position, int turn) {
+		System.out.printf("======== MOVE NUMBER %d ========\n", turn);
 		for(int i = 0; i < wumpusWorld.length; i++) {
 			for(int j = 0; j < wumpusWorld[i].length; j++) {
 				System.out.printf("%s ", wumpusWorld[j][i]);
 			}
-			System.out.printf("\t");
+			
+			System.out.printf("\t|\t");
 			for(int j = 0; j < wumpusWorld[i].length; j++) {
 				System.out.printf("%s ", agentMatrix[j][i]);
 			}
 			System.out.printf("\n");
 		}
+		System.out.println();
 	}
 	
 }
