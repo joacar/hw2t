@@ -45,7 +45,7 @@ public class AgentTesting {
 	private TestWorld testWorld;
 
 	private Hashtable<Position, Integer> exploredStates;
-	private Hashtable<Position, StateT> knowledgeBase;
+	public static Hashtable<Position, StateT> knowledgeBase;
 
 	private Hashtable<Position, Integer> adjacentToBase;
 	private Hashtable<Position, Integer> unwantedStates;
@@ -56,7 +56,7 @@ public class AgentTesting {
 
 	private KnowledgeBaseTest kb;
 	public Position current = null, previous = null;
-
+	public StateT currentState = null;
 	private Random rand;
 
 	private boolean foundTheGold = false;
@@ -70,6 +70,7 @@ public class AgentTesting {
 	// For testing
 	private BufferedReader br;
 	private RunTest runTest;
+	private int moveNumber = 0;
 	/**
 	 * Entry point
 	 *  
@@ -107,7 +108,8 @@ public class AgentTesting {
 		// Load the test world with the input fule
 		runTest = new RunTest(inputFile);
 		testWorld = runTest.testWorld; //new TestWorld(inputFile);
-
+		runTest.agentWorld = knowledgeBase;
+		
 		initialize();
 
 		explore();
@@ -122,10 +124,9 @@ public class AgentTesting {
 			" choice: " );
 			line = br.readLine();
 			if(line.equals("next")) {
-				runTest.upDateAgentMatrix(current);
+				runTest.upDateAgentMatrix(currentState);
 				runTest.upDateAgentLocation(current, previous);
-				runTest.print(current);
-				explore();
+				runTest.print(current, moveNumber);
 			}
 			if(line.equals("stop")) {
 				System.exit(0);
@@ -162,12 +163,16 @@ public class AgentTesting {
 	private void explore() {
 		Position origin = new Position(0,0), base, newPosition,
 		lastKnownSafePosition = null;
+		
+		current = origin;
+		
 		StateT state = percept(origin);
+		currentState = state;
 		knowledgeBase.put(origin, state);
 		inference(state); //infer(state);
 		explored(origin);
-		current = base = origin;
-
+		base = origin;
+				
 		int movesMade = 0;
 		do {
 			for(int[] pos : AgentTesting.ADJACENT) {
@@ -213,7 +218,7 @@ public class AgentTesting {
 
 	private boolean move(Position position, int movesMade) {
 		StateT state = null;
-
+		moveNumber += 1;
 		if(knowledgeBase.contains(position)) {
 			// Hmmz TODO
 			state = knowledgeBase.get(position);
@@ -222,7 +227,7 @@ public class AgentTesting {
 				//moveTo(position)
 				movesMade += 1;
 				state = percept(position);
-
+				currentState = state;
 				knowledgeBase.put(position, state);
 				explored(position);
 
@@ -249,7 +254,6 @@ public class AgentTesting {
 	 * @return
 	 */
 	private StateT percept(Position current) {
-		control();
 		// Make the new position for this state
 		Position position = current.newPosition();
 		// Get the value (percept)
@@ -322,6 +326,7 @@ public class AgentTesting {
 		}
 
 		if(DEBUG) System.out.printf("\tInfered @ %s\n",state.toString());
+		control();
 	}
 
 	private boolean isSafe(Position position) {
