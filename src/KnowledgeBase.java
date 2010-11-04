@@ -9,6 +9,7 @@
  */
 public class KnowledgeBase {	
 	Agent agent;
+	
 	public KnowledgeBase(Agent agent) {
 		this.agent = agent;
 	}

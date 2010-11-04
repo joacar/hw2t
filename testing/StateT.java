@@ -21,32 +21,16 @@ import java.util.EnumSet;
  */
 public class StateT {
 	
-	private class Status {
-		private int status = 16;
-		
-		Status() {}
-		
-		public int status() { return status; }
-		
-		public void and(byte flag) { status = status & flag; }
-		
-		public void or(byte flag) { status = status | flag;	}
-		
-		public boolean contains(byte flag) { return ((status | flag) > 0) ? true : false;}
+	private boolean border, stench, glitter, breeze, visited, pit, wumpus;
+	private int wumpusP = 0, pitP = 0, value;
+
+	private boolean ok = (!pit || !wumpus || wumpusP <= 0 || pitP <= 0) ? true : false; 
 	
-		public void setOk() { status = 16; }
-		
-		public boolean isOk() { return ((status & 4) > 0) ? true : false; }
-		
-		public boolean isGold() { return ((status & 8) == 1) ? true : false; }
-	}
-	
-	boolean border, stench, glitter, breeze, visited, ok,
-		pit, wumpus;
 	private boolean states[] = {border, breeze, stench, glitter, ok};
-	int wumpusP = 0, pitP = 0, time, value;
-	Status status;
+	
 	Position position;
+	
+	String status = null;
 	
 	/**
 	 * Constructor
@@ -54,28 +38,66 @@ public class StateT {
 	StateT(Position position, boolean visited) {
 		this.position = position;
 		this.visited = visited;
-		status = new Status();
 	}
 	
-	public void setStates(boolean list[]) { states = list; }
+	public void setStates(boolean list[]) { 
+		states = list; 
+		
+		System.out.print("{");
+		for(boolean b : states)
+			System.out.print(b+", ");
+		System.out.println("}");
+		
+	}
 	
+	public void setStatus() {
+		StringBuilder sb = new StringBuilder();
+		if(breeze) { sb.append("B"); }
+		if(stench) { sb.append("S"); }
+		if(glitter) { sb.append("G"); }
+		if(pit) { sb.append("P("+pitP+")"); }
+		if(wumpus) { sb.append("W("+wumpusP+")"); }
+		if(border) { sb.append("X"); }
+		if(sb.length() == 0) sb.append("0");
+		status = sb.toString();
+	}
+	
+	public String getStatus() { return status; }
 	public boolean[] getStates() { return states; }
 	
-	public void setOk() {states[4] = true; }
+	public void setOk() {states[4] = true; pit = wumpus = false; setStatus(); }
 	
 	public boolean isOk() { return states[4]; } 
 	
-	public boolean isGold() { return states[3]; }
+	public boolean isGlittery() { return states[3]; }
 	
-	/** ===== SHIT ======= **/
-	public boolean contains(byte flag) { return status.contains(flag); }
+	public boolean isBorder() { return states[0]; }
 	
-	public int getStatus() { return status.status; }
+	public boolean isBreezy() { return states[1]; }
 	
-	public void or(byte flag) {status.or(flag); }
+	public boolean isSmelly() { return states[2]; }
 	
-	public void and(byte flag) {status.and(flag); }
+	public boolean isPit() { return pit; }
 	
+	public boolean isWumpus() { return wumpus; }
+	
+	public int getPitPossibility() { return pitP; }
+	
+	public int getWumpusPossibility() { return wumpusP; }
+	
+	public void incrementPit() { pitP += 1; }
+	
+	public void incrementWumpus() { wumpusP += 1; }
+	
+	/**
+	 * The state is the wumpus home
+	 */
+	public void setWumpus() { wumpus = true; ok = pit = false; setStatus(); }
+	
+	/**
+	 * The state is a pit
+	 */
+	public void setPit() { pit = true; ok = wumpus = false; setStatus(); }
 	
 	/**
 	 * Set the status value
@@ -90,16 +112,6 @@ public class StateT {
 	public int getValue() { return value; }
 	
 	/**
-	 * The state is the wumpus home
-	 */
-	public void setWumpus() { wumpus = true; ok = visited = pit = false; }
-	
-	/**
-	 * The state is a pit
-	 */
-	public void setPit() { pit = true; ok = visited = wumpus = false; }
-	
-	/**
 	 * State is visited
 	 */
 	public void setVisited() { visited = true; }
@@ -111,11 +123,27 @@ public class StateT {
 	
 	@Override
 	public String toString() {
+		int x = position.getX(), y = position.getY();
 		StringBuilder sb = new StringBuilder();
-		sb.append("P["+position.getX()+","+position.getY()+"] status is ");
-		//for(StatusT st : status) 
-		//	if(value == st.getStatus()) sb.append(st+"("+st.getStatus()+")");
-		
+		sb.append("P["+x+","+y+"] status is ");
+		if(visited) sb.append("("+value+")");
+		if(breeze) {
+			sb.append(" BREEZE ");
+		}
+		if(stench) {
+			sb.append(" STENCH");
+		}
+		if(glitter) {
+			sb.append(" GLITTER ");
+		}
+		if(pit) {
+			sb.append(" PIT ");
+		}
+		if(wumpus) {
+			sb.append(" WUMPUS ");
+		}
+		if(pitP > 0) sb.append(pitP); 
+		if(wumpusP > 0) sb.append(wumpusP);
 		return sb.toString();
 	}
 }

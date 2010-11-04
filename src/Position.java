@@ -22,7 +22,7 @@
 public class Position {
 	private int x, y;				// x,y coordinates
 	private float heading;			// heading as a float
-	private Direction direction;	// direction looking
+	private String direction;		// direction looking
 	
 	/**
 	 * Basic constructor taking two parameters
@@ -35,25 +35,11 @@ public class Position {
 	}
 	
 	/**
-	 * Constructor taking three parameters
-	 * 
-	 * @param x coordinate
-	 * @param y coordinate
-	 * @param direction Direction
-	 */
-	Position(int x, int y, Direction heading) {
-		this.x = x; this.y = y;
-		setHeading(heading);
-		this.direction = heading;
-	}
-	
-	/**
 	 * Set the current heading
 	 * 
 	 * @param heading Heading 
 	 */
-	public void setHeading(Direction heading) {
-		this.heading = heading.getHeading();
+	public void setHeading(String heading) {
 		this.direction = heading;
 	}
 	
@@ -63,14 +49,8 @@ public class Position {
 	 * 
 	 * @return heading as a enum
 	 */
-	public Direction getHeading() { return direction; }
+	public String getHeading() { return direction; }
 	
-	/**
-	 * Get the heading we are facing as a string
-	 * 
-	 * @return heading as a String
-	 */
-	public String getHeadingString() { return direction.name(); }
 	
 	/**
 	 * Get the heading we are facing as a float
@@ -102,14 +82,15 @@ public class Position {
 		x = x + position[0];
 		y = y + position[1];
 	}
+	
 	public void reverseHeading() {
-		for(Direction st : Direction.values()) 
-			if(heading == -st.getHeading()) direction = st;
+		//for(Direction st : Direction.values()) 
+			//if(heading == -st.getHeading()) direction = st;
 	}
 	
-	public Position newPosition() { return new Position(this.x, this.y, direction);}
+	public Position newPosition() { return new Position(this.x, this.y);}
 	
-	public Position newPosition(int x, int y) { return new Position(this.x+x, this.y+y, direction); }
+	public Position newPosition(int x, int y) { return new Position(this.x+x, this.y+y); }
 
 	/* (non-Javadoc)
 	 * @see java.lang.Object#hashCode()

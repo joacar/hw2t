@@ -10,24 +10,26 @@ public class Direction {
 	public static final String B_LEFT = "BACK_LEFT";		// -3
 	public static final String F_LEFT = "FORWARD_LEFT"; 	// 4
 	public static final String B_RIGHT = "BACK_RIGHT";		// -4
-	
-	
+
+
 	public static String[] ALL = {
 		"FORWARD", "BACK", "RIGHT", "LEFT", "FORWARD_RIGHT",
 		"BACK_LEFT", "FORWARD_LEFT", "BACK_RIGHT" };
-	
+
 	public static void fillMap() {
-		int i = 1;
+		int i = 1, cntr = 0;
 		for(String s : ALL) {
-			if((i % 2) == 0) {
-				i = -1*i;
+			if(cntr == 0) {
+				map.put(s,i);
+				cntr += 1;
 			} else {
-				
+				map.put(s, (-i));
+				cntr = 0;
+				i += 1;
 			}
-			map.put(s, i);
 		}
 	}
-	
+
 	public static void main(String args[]) {
 		fillMap();
 		for(String s : ALL)
